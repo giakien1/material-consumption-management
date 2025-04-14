@@ -1,7 +1,7 @@
 const Employee = require('../models/Employee');
 
 const EmployeeController = {
-    async getAllEmployees(req, res) {
+    async getEmployees(req, res) {
         try{
             const employees = await Employee.find()
             .populate('RoleID')

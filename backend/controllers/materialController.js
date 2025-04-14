@@ -74,4 +74,4 @@ const materialController = {
     },
 }
 
-modele.exports = materialController;
+module.exports = materialController;
