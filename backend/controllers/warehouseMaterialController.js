@@ -1,6 +1,6 @@
-const WarehouseMaterial = require('../models/warehouseMaterialModel');
-const Warehouse = require('../models/warehouseModel');
-const Material = require('../models/materialModel');
+const WarehouseMaterial = require('../models/WarehouseMaterial');
+const Warehouse = require('../models/Warehouse');
+const Material = require('../models/Material');
 
 const warehouseMaterialController = {
     async getWarehouseMaterials(req, res) {

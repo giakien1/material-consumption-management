@@ -10,7 +10,6 @@ const warehouseMaterialRouter = require('./warehouseMaterialRouter');
 const consumptionStandardRouter = require('./consumptionStandardRouter');
 
 function route(app) {
-    app.use('/api/products', productRouter);
     app.use('/api/materials', materialRouter);
     app.use('/api/employees', employeeRouter);
     app.use('/api/import-exports', importExportRouter);
@@ -20,7 +19,7 @@ function route(app) {
     app.use('/api/warehouses', warehouseRouter);
     app.use('/api/warehouse-materials', warehouseMaterialRouter);
     app.use('/api/consumption-standards', consumptionStandardRouter);
-    app.use('/api/', productRouter);
+    app.use('/api/products', productRouter);
   };
 
 module.exports = route;

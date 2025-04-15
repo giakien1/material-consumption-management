@@ -1,6 +1,6 @@
 const MaterialConsumption = require('../models/MaterialConsumption');
 const ConsumptionStandard = require('../models/ConsumptionStandard');
-const ProductionOrder = require('../models/ProductionOrder');
+const ProductionOrder = require('../models/ProductOrder');
 
 const materialConsumptionController = {
   // Tạo bản ghi tiêu hao vật tư
