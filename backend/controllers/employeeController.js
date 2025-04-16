@@ -1,4 +1,5 @@
 const Employee = require('../models/Employee');
+const Role = require('../models/Role'); 
 
 const EmployeeController = {
     async getEmployees(req, res) {
@@ -34,11 +35,16 @@ const EmployeeController = {
                 return res.status(400).json({ message: 'EmployeeId already exists' });
             }
 
-            // Kiểm tra xem RoleID có tồn tại trong bảng Role không            
+            //Kiểm tra xem RoleID có tồn tại không
+            const existingRole = await Role.findOne({ RoleID });
+            if(!existingRole) {
+                return res.status(400).json({ message: 'RoleID does not exist' });
+            }
+
             const employee = new Employee({ 
                 EmployeeId, 
                 EmployeeName, 
-                RoleID,
+                RoleID: existingRole._id,
             });
             await employee.save();
             res.status(201).json(employee);
@@ -48,21 +54,34 @@ const EmployeeController = {
     },
 
     async updateEmployee(req, res) {
-        try{
+        try {
             const { EmployeeName, RoleID } = req.body;
+    
+            // Tìm Role theo RoleID nếu client gửi "R001" thay vì ObjectId
+            const role = await Role.findOne({ RoleID });
+            if (!role) {
+                return res.status(400).json({ message: 'RoleID does not exist' });
+            }
+    
             const employee = await Employee.findOneAndUpdate(
                 { EmployeeId: req.params.id },
-                { EmployeeName, RoleID },
+                {
+                    EmployeeName,
+                    RoleID: role._id,
+                },
                 { new: true }
-            );
-            if(!employee){
-                return res.status(404).json({message: 'Employee not found'});
+            ).populate('RoleID');
+    
+            if (!employee) {
+                return res.status(404).json({ message: 'Employee not found' });
             }
+    
             res.status(200).json(employee);
-        } catch(error){
-            res.status(400).json({message: error.message});
+        } catch (error) {
+            res.status(400).json({ message: error.message });
         }
     },
+    
 
     async deleteEmployee(req, res) {
         try{
