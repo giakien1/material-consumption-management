@@ -7,12 +7,12 @@ const importExportSchema = new mongoose.Schema({
     unique: true,
   },
   MaterialID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Material',
     required: true,
   },
   WarehouseID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Warehouse',
     required: true,
   },

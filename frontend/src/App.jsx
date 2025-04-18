@@ -6,6 +6,8 @@ import EmployeePage from './components/employeePage';
 import RolePage from './components/rolePage';
 import MaterialPage from './components/materialPage';
 import WarehousePage from './components/warehousePage';
+import Transaction from './components/transactionPage';
+import WarehouseMaterial  from './components/warehouseMaterialPage';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Route path="/role" element={<RolePage />} />
           <Route path="/material" element={<MaterialPage />} />
           <Route path="/warehouse" element={<WarehousePage />} />
+          <Route path="/transaction" element={<Transaction />} />
+          <Route path="/warehouse-materials" element={<WarehouseMaterial />} />
         </Routes>
     </Router>
   );

@@ -11,6 +11,7 @@ const MaterialPage = () => {
         MaterialName: '',
         Unit: '',
         UnitPrice: 0,
+        Quantity: 0,
     });
 
     const [isEdit, setIsEdit] = useState(false);
@@ -30,7 +31,7 @@ const MaterialPage = () => {
     };
 
     const handleShowAdd = () => {
-        setFormData({ MaterialID: '', MaterialName: '', Unit: '', UnitPrice: 0 });
+        setFormData({ MaterialID: '', MaterialName: '', Unit: '', UnitPrice: 0, Quantity: 0 });
         setIsEdit(false);
         setShowModal(true);
       };
@@ -90,6 +91,7 @@ const MaterialPage = () => {
                 <th>Material Name</th>
                 <th>Unit</th>
                 <th>Unit Price</th>
+                <th>Quantity</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -101,6 +103,7 @@ const MaterialPage = () => {
                     <td>{material.MaterialName}</td>
                     <td>{material.Unit}</td>
                     <td>{material.UnitPrice}</td>
+                    <td>{material.Quantity}</td>
                     <td>
                       <Button
                         variant="warning"
@@ -177,6 +180,16 @@ const MaterialPage = () => {
                     value={formData.UnitPrice}
                     onChange={handleInputChange}
                     placeholder="Enter Unit Price"
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3" controlId="formUnitQuantity">
+                  <Form.Label>Quantity</Form.Label>
+                  <Form.Control
+                    type='number'
+                    name="Quantity"
+                    value={formData.Quantity}
+                    onChange={handleInputChange}
+                    placeholder="Enter Quantity"
                   />
                 </Form.Group>
                 <Button variant="primary" type="submit">

@@ -19,6 +19,11 @@ const materialSchema = new mongoose.Schema({
     required: true,
     min: 0, // Giá không âm
   },
+  Quantity: {
+    type: Number,
+    required: true,
+    min: 0, // Số lượng không âm
+  },
 }, {
   timestamps: true, 
 });

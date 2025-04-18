@@ -1,13 +1,14 @@
 const mongoose = require('mongoose');
+const Warehouse = require('./Warehouse');
 
 const warehouseMaterialSchema = new mongoose.Schema({
   WarehouseID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Warehouse',
     required: true,
   },
   MaterialID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Material',
     required: true,
   },
@@ -19,5 +20,7 @@ const warehouseMaterialSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+warehouseMaterialSchema.index({ WarehouseID: 1, MaterialID: 1 }, { unique: true });
 
 module.exports = mongoose.model('WarehouseMaterial', warehouseMaterialSchema);

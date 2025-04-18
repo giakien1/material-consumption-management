@@ -4,14 +4,14 @@ const materialController = {
     // Tạo vật tư mới
     async createMaterial(req, res) {
         try {
-          const { MaterialID, MaterialName, Unit, UnitPrice } = req.body;
+          const { MaterialID, MaterialName, Unit, UnitPrice, Quantity } = req.body;
           
           // Kiểm tra MaterialID đã tồn tại chưa
           const existingMaterial = await Material.findOne({ MaterialID });
           if (existingMaterial) {
             return res.status(400).json({ message: 'MaterialID already exists' });
           }
-          const material = new Material({ MaterialID, MaterialName, Unit, UnitPrice });
+          const material = new Material({ MaterialID, MaterialName, Unit, UnitPrice, Quantity });
           await material.save();
           res.status(201).json(material);
         } catch (error) {
@@ -45,10 +45,10 @@ const materialController = {
     // Cập nhật vật tư
     async updateMaterial(req, res) {
         try {
-        const { MaterialName, Unit, UnitPrice } = req.body;
+        const { MaterialName, Unit, UnitPrice, Quantity } = req.body;
         const material = await Material.findOneAndUpdate(
             { MaterialID: req.params.id },
-            { MaterialName, Unit, UnitPrice },
+            { MaterialName, Unit, UnitPrice, Quantity },
             { new: true }
         );
         if (!material) {
