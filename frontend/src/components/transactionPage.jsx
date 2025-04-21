@@ -5,7 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { api } from '../api';
 
 const ImportExportPage = () => {
-  const [importExports, setImportExports] = useState([]);
+  const [transactions, setImportExports] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -24,8 +24,18 @@ const ImportExportPage = () => {
   }, []);
 
   const fetchImportExports = async () => {
-    const res = await api.get('/import-exports');
-    setImportExports(res.data);
+    try {
+      const res = await api.get('/import-exports');
+      if (Array.isArray(res.data)) {
+        setImportExports(res.data);
+      } else {
+        setImportExports([]);
+      }
+      console.log('Fetched Import/Export Data:', res.data);
+    } catch (error) {
+      console.error('Error fetching import/export data:', error);
+      setImportExports([]);  // Đảm bảo là mảng trống nếu có lỗi
+    }
   };
   
   const fetchMaterials = async () => {
@@ -184,59 +194,53 @@ const ImportExportPage = () => {
         Add Transaction
       </Button>
 
-      <Table striped bordered hover responsive>
+      <table className="table table-bordered">
         <thead>
           <tr>
             <th>Transaction ID</th>
             <th>Type</th>
-            <th>Materials</th>
-            <th>Warehouse ID</th>
-            <th>Employee ID</th>
             <th>Date</th>
-            <th>Actions</th>
+            <th>Employee</th>
+            <th>Warehouse</th>
+            <th>Materials</th>
           </tr>
         </thead>
         <tbody>
-        {importExports.length > 0 ? (
-        importExports.map((importExport) => (
-          <tr key={importExport.TransactionId}>
-            <td>{importExport.TransactionId}</td>
-            <td>
-              {importExport.Type && typeof importExport.Type === 'string' 
-                ? importExport.Type.charAt(0).toUpperCase() + importExport.Type.slice(1) 
-                : 'N/A'}
-            </td>
-            <td>
-              {importExport.MaterialsUsed?.map((m) =>
-                typeof m.MaterialID === 'object'
-                  ? `${m.MaterialID.MaterialID}: ${m.Quantity}`
-                  : `${m.MaterialID}: ${m.Quantity}`
-              ).join(', ') ||
-                (importExport.MaterialID && `${importExport.MaterialID}: ${importExport.Quantity}`)}
-            </td>
-            <td>{importExport.WarehouseId?.WarehouseID || importExport.WarehouseId}</td>
-            <td>{importExport.EmployeeId?.EmployeeID || importExport.EmployeeId}</td>
-            <td>{new Date(importExport.transactionDate).toLocaleDateString()}</td>
-            <td>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => handleDelete(importExport.TransactionId)}
-              >
-                Delete
-              </Button>
-            </td>
-          </tr>
-        ))
-      ) : (
-        <tr>
-          <td colSpan="7" className="text-center">
-            No transactions found
-          </td>
-        </tr>
-      )}
-        </tbody>
-      </Table>
+        {Array.isArray(transactions) && transactions.length > 0 ? (
+          transactions.map((transaction, index) => (
+            <tr key={index}>
+              <td>{transaction.TransactionID}</td>
+              <td>{transaction.TransactionType}</td>
+              <td>{new Date(transaction.TransactionDate).toLocaleDateString()}</td>
+              <td>{transaction.EmployeeID?.EmployeeName || "N/A"}</td>
+              <td>{transaction.WarehouseID?.WarehouseName || "N/A"}</td>
+              <td>
+                {Array.isArray(transaction.MaterialsUsed) && transaction.MaterialsUsed.length === 0 ? (
+                  <div>No materials</div>
+                ) : (
+                  Array.isArray(transaction.MaterialsUsed) && transaction.MaterialsUsed.length > 0 ? (
+                    <ul className="mb-0 ps-3">
+                      {transaction.MaterialsUsed.map((item, idx) => (
+                        <li key={idx}>
+                          {item.MaterialID?.MaterialName || "?"} - {item.Quantity} {item.MaterialID?.Unit || ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div>No materials</div> // Trường hợp khi MaterialsUsed là undefined hoặc không phải mảng
+                  )
+                )}
+              </td>
+
+            </tr>
+          ))
+        ) : (
+          <tr><td colSpan="6">No transactions available</td></tr>
+        )}
+      </tbody>
+
+      </table>
+
 
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>
@@ -367,7 +371,7 @@ const ImportExportPage = () => {
               <Form.Label>Date</Form.Label>
               <Form.Control
                 type="date"
-                name="Date"
+                name="transactionDate"
                 value={formData.transactionDate}
                 onChange={(e) => handleInputChange(e)}
                 required

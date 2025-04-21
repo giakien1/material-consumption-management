@@ -12,7 +12,7 @@ const importExportController = {
     try {
       const { Type, MaterialsUsed, WarehouseId, EmployeeId, transactionDate } = req.body;
   
-      if (!Type || !MaterialsUsed || !Array.isArray(MaterialsUsed) || !WarehouseId || !EmployeeId || !Date) {
+      if (!Type || !MaterialsUsed || !Array.isArray(MaterialsUsed) || !WarehouseId || !EmployeeId || !transactionDate) {
         return res.status(400).json({ message: 'Thiếu thông tin cần thiết' });
       }
   
@@ -20,9 +20,10 @@ const importExportController = {
       if (!['import', 'export'].includes(normalizedType)) {
         return res.status(400).json({ message: 'Loại giao dịch không hợp lệ' });
       }
+  
       const transactionType = normalizedType === 'import' ? 'Import' : 'Export';
   
-      // Kiểm tra tồn tại kho và nhân viên
+      // Kiểm tra kho và nhân viên
       const [warehouse, employee] = await Promise.all([
         Warehouse.findOne({ WarehouseID: WarehouseId }),
         Employee.findOne({ EmployeeID: EmployeeId }),
@@ -30,9 +31,9 @@ const importExportController = {
       if (!warehouse) return res.status(404).json({ message: 'Kho không tồn tại' });
       if (!employee) return res.status(404).json({ message: 'Nhân viên không tồn tại' });
   
-      const updatedStocks = [];
+      const materialUpdates = [];
   
-      // Duyệt qua từng vật tư
+      // Kiểm tra từng vật tư
       for (const item of MaterialsUsed) {
         const { MaterialID, Quantity } = item;
   
@@ -60,39 +61,42 @@ const importExportController = {
         warehouseMaterial.StockQuantity += (Type === 'import' ? Quantity : -Quantity);
         await warehouseMaterial.save();
   
-        // Tạo giao dịch
-        const transaction = new ImportExport({
-          TransactionID: `TX-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        // Chuẩn bị dữ liệu thêm vào giao dịch
+        materialUpdates.push({
           MaterialID: material._id,
-          WarehouseID: warehouse._id,
-          TransactionType: transactionType,
           Quantity,
-          TransactionDate: transactionDate || Date.now(),
-          EmployeeID: employee._id,
-        });
-        await transaction.save();
-  
-        updatedStocks.push({
-          MaterialID,
-          NewStock: warehouseMaterial.StockQuantity,
         });
       }
   
-      return res.status(201).json({
-        message: `Giao dịch ${Type} đã được xử lý thành công cho ${MaterialsUsed.length} vật tư`,
-        updatedStocks,
+      // Tạo một bản ghi giao dịch 
+      const transaction = new ImportExport({
+        TransactionID: `TX-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        WarehouseID: warehouse._id,
+        TransactionType: transactionType,
+        TransactionDate: transactionDate || Date.now(),
+        EmployeeID: employee._id,
+        MaterialsUsed: materialUpdates,
       });
+  
+      await transaction.save();
+  
+      return res.status(201).json({
+        message: `Giao dịch ${transactionType} đã được tạo với ${materialUpdates.length} vật tư`,
+        transaction,
+      });
+  
     } catch (error) {
       console.error('Lỗi tạo giao dịch:', error);
       res.status(500).json({ message: 'Lỗi server khi xử lý giao dịch', error: error.message });
     }
   },
   
+  
   // Lấy danh sách giao dịch
   async getTransactions(req, res) {
     try {
       const transactions = await ImportExport.find()
-        .populate('MaterialID')
+        .populate('MaterialsUsed.MaterialID')
         .populate('WarehouseID')
         .populate('EmployeeID');
       res.status(200).json(transactions);
@@ -105,9 +109,9 @@ const importExportController = {
   async getTransactionById(req, res) {
     try {
       const transaction = await ImportExport.findOne({ TransactionID: req.params.id })
-        .populate('MaterialID')
-        .populate('WarehouseId')
-        .populate('EmployeeId');
+        .populate('MaterialsUsed.MaterialID')
+        .populate('WarehouseID')
+        .populate('EmployeeID');
       if (!transaction) {
         return res.status(404).json({ message: 'Transaction not found' });
       }
@@ -151,7 +155,7 @@ const importExportController = {
         }
       }
 
-      await ImportExport.findOneAndDelete({ TransactionId: req.params.id });
+      await ImportExport.findOneAndDelete({ TransactionID: req.params.id });
       res.status(200).json({ message: 'Đã xóa giao dịch' });
     } catch (error) {
       res.status(500).json({ message: error.message });

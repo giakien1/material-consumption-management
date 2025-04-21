@@ -6,11 +6,6 @@ const importExportSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  MaterialID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Material',
-    required: true,
-  },
   WarehouseID: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Warehouse',
@@ -20,11 +15,6 @@ const importExportSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['Import', 'Export'], // Chỉ chấp nhận Import hoặc Export
-  },
-  Quantity: {
-    type: Number,
-    required: true,
-    min: 0,
   },
   TransactionDate: {
     type: Date,
@@ -36,6 +26,20 @@ const importExportSchema = new mongoose.Schema({
     ref: 'Employee',
     required: true,
   },
+  MaterialsUsed: [
+    {
+      MaterialID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Material',
+        required: true,
+      },
+      Quantity: {
+        type: Number,
+        required: true,
+        min: 0,
+      }
+    }
+  ],
 }, {
   timestamps: true,
 });
