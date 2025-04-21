@@ -15,53 +15,44 @@ const ImportExportPage = () => {
     MaterialsUsed: [{ MaterialID: '', Quantity: '' }],
     WarehouseId: '',
     EmployeeId: '',
-    Date: new Date().toISOString().split('T')[0],
+    transactionDate: new Date().toISOString().split('T')[0],
   });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    fetchImportExports();
-    fetchMaterials();
-    fetchEmployees();
-    fetchWarehouses();
+    fetchData();
   }, []);
 
   const fetchImportExports = async () => {
-    try {
-      const response = await api.get('/import-exports');
-      setImportExports([...response.data]);
-    } catch (error) {
-      toast.error('Failed to fetch transactions: ' + (error.response?.data?.message || error.message));
-    }
+    const res = await api.get('/import-exports');
+    setImportExports(res.data);
   };
-
+  
   const fetchMaterials = async () => {
-    try {
-      const response = await api.get('/materials');
-      console.log('Fetched materials:', response.data);
-      setMaterials([...response.data]);
-    } catch (error) {
-      toast.error('Failed to fetch materials: ' + (error.response?.data?.message || error.message));
-    }
+    const res = await api.get('/materials');
+    setMaterials(res.data);
   };
-
+  
   const fetchEmployees = async () => {
-    try {
-      const response = await api.get('/employees');
-      console.log('Fetched employees:', response.data);
-      setEmployees([...response.data]);
-    } catch (error) {
-      toast.error('Failed to fetch employees: ' + (error.response?.data?.message || error.message));
-    }
+    const res = await api.get('/employees');
+    setEmployees(res.data);
   };
-
+  
   const fetchWarehouses = async () => {
+    const res = await api.get('/warehouses');
+    setWarehouses(res.data);
+  };
+  
+  const fetchData = async () => {
     try {
-      const response = await api.get('/warehouses');
-      console.log('Fetched warehouses:', response.data);
-      setWarehouses([...response.data]);
+      await Promise.all([
+        fetchImportExports(),
+        fetchMaterials(),
+        fetchEmployees(),
+        fetchWarehouses(),
+      ]);
     } catch (error) {
-      toast.error('Failed to fetch warehouses: ' + (error.response?.data?.message || error.message));
+      toast.error('Failed to fetch data: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -70,8 +61,8 @@ const ImportExportPage = () => {
       Type: 'import',
       MaterialsUsed: [{ MaterialID: materials.length > 0 ? materials[0].MaterialID : '', Quantity: '' }],
       WarehouseId: warehouses.length > 0 ? warehouses[0].WarehouseID : '',
-      EmployeeId: employees.length > 0 ? employees[0].EmployeeId : '',
-      Date: new Date().toISOString().split('T')[0],
+      EmployeeId: employees.length > 0 ? employees[0].EmployeeID : '',
+      transactionDate: new Date().toISOString().split('T')[0],
     });
     setErrors({});
     setShowModal(true);
@@ -84,7 +75,7 @@ const ImportExportPage = () => {
       MaterialsUsed: [{ MaterialID: '', Quantity: '' }],
       WarehouseId: '',
       EmployeeId: '',
-      Date: new Date().toISOString().split('T')[0],
+      transactionDate: new Date().toISOString().split('T')[0],
     });
     setErrors({});
   };
@@ -127,7 +118,7 @@ const ImportExportPage = () => {
     if (!formData.Type) newErrors.Type = 'Type is required';
     if (!formData.WarehouseId) newErrors.WarehouseId = 'Warehouse is required';
     if (!formData.EmployeeId) newErrors.EmployeeId = 'Employee is required';
-    if (!formData.Date) newErrors.Date = 'Date is required';
+    if (!formData.transactionDate) newErrors.Date = 'Date is required';
 
     // Check for duplicate MaterialID
     const materialIds = formData.MaterialsUsed.map((m) => m.MaterialID);
@@ -163,7 +154,7 @@ const ImportExportPage = () => {
         })),
         WarehouseId: formData.WarehouseId,
         EmployeeId: formData.EmployeeId,
-        Date: formData.Date,
+        transactionDate: formData.transactionDate,
       });
       toast.success('Transaction added successfully');
       handleClose();
@@ -206,40 +197,44 @@ const ImportExportPage = () => {
           </tr>
         </thead>
         <tbody>
-          {importExports.length > 0 ? (
-            importExports.map((importExport) => (
-              <tr key={importExport.TransactionId}>
-                <td>{importExport.TransactionId}</td>
-                <td>{importExport.Type.charAt(0).toUpperCase() + importExport.Type.slice(1)}</td>
-                <td>
-                  {importExport.MaterialsUsed?.map((m) =>
-                    typeof m.MaterialID === 'object'
-                      ? `${m.MaterialID.MaterialID}: ${m.Quantity}`
-                      : `${m.MaterialID}: ${m.Quantity}`
-                  ).join(', ') ||
-                    (importExport.MaterialID && `${importExport.MaterialID}: ${importExport.Quantity}`)}
-                </td>
-                <td>{importExport.WarehouseId?.WarehouseID || importExport.WarehouseId}</td>
-                <td>{importExport.EmployeeId?.EmployeeId || importExport.EmployeeId}</td>
-                <td>{new Date(importExport.Date).toLocaleDateString()}</td>
-                <td>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDelete(importExport.TransactionId)}
-                  >
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="7" className="text-center">
-                No transactions found
-              </td>
-            </tr>
-          )}
+        {importExports.length > 0 ? (
+        importExports.map((importExport) => (
+          <tr key={importExport.TransactionId}>
+            <td>{importExport.TransactionId}</td>
+            <td>
+              {importExport.Type && typeof importExport.Type === 'string' 
+                ? importExport.Type.charAt(0).toUpperCase() + importExport.Type.slice(1) 
+                : 'N/A'}
+            </td>
+            <td>
+              {importExport.MaterialsUsed?.map((m) =>
+                typeof m.MaterialID === 'object'
+                  ? `${m.MaterialID.MaterialID}: ${m.Quantity}`
+                  : `${m.MaterialID}: ${m.Quantity}`
+              ).join(', ') ||
+                (importExport.MaterialID && `${importExport.MaterialID}: ${importExport.Quantity}`)}
+            </td>
+            <td>{importExport.WarehouseId?.WarehouseID || importExport.WarehouseId}</td>
+            <td>{importExport.EmployeeId?.EmployeeID || importExport.EmployeeId}</td>
+            <td>{new Date(importExport.transactionDate).toLocaleDateString()}</td>
+            <td>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => handleDelete(importExport.TransactionId)}
+              >
+                Delete
+              </Button>
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan="7" className="text-center">
+            No transactions found
+          </td>
+        </tr>
+      )}
         </tbody>
       </Table>
 
@@ -285,61 +280,61 @@ const ImportExportPage = () => {
             </Form.Group>
 
             {formData.MaterialsUsed.map((material, index) => (
-              <Row key={index} className="mb-3">
-                <Col xs={5}>
-                  <Form.Group controlId={`formMaterialID${index}`}>
-                    <Form.Label>Material</Form.Label>
-                    <Form.Select
-                      name={`MaterialID${index}`}
-                      value={material.MaterialID}
-                      onChange={(e) => handleInputChange(e, index)}
-                      required
-                    >
-                      {materials.length === 0 ? (
-                        <option value="">No materials available</option>
-                      ) : (
-                        materials.map((m) => (
-                          <option key={m.MaterialID} value={m.MaterialID}>
-                            {m.MaterialName || 'Unnamed Material'} ({m.MaterialID})
-                          </option>
-                        ))
-                      )}
-                    </Form.Select>
-                    {errors[`MaterialID${index}`] && (
-                      <Form.Text className="text-danger">{errors[`MaterialID${index}`]}</Form.Text>
-                    )}
-                  </Form.Group>
-                </Col>
-                <Col xs={4}>
-                  <Form.Group controlId={`formQuantity${index}`}>
-                    <Form.Label>Quantity</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name={`Quantity${index}`}
-                      value={material.Quantity}
-                      onChange={(e) => handleInputChange(e, index)}
-                      placeholder="Enter Quantity"
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                    {errors[`Quantity${index}`] && (
-                      <Form.Text className="text-danger">{errors[`Quantity${index}`]}</Form.Text>
-                    )}
-                  </Form.Group>
-                </Col>
-                <Col xs={3} className="d-flex align-items-end">
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => removeMaterial(index)}
-                    disabled={formData.MaterialsUsed.length === 1}
+            <Row key={material.MaterialID || `material-${index}`} className="mb-3">
+              <Col xs={5}>
+                <Form.Group controlId={`formMaterialID${index}`}>
+                  <Form.Label>Material</Form.Label>
+                  <Form.Select
+                    name={`MaterialID${index}`}
+                    value={material.MaterialID}
+                    onChange={(e) => handleInputChange(e, index)}
+                    required
                   >
-                    Remove
-                  </Button>
-                </Col>
-              </Row>
-            ))}
+                    {materials.length === 0 ? (
+                      <option value="">No materials available</option>
+                    ) : (
+                      materials.map((m) => (
+                        <option key={m.MaterialID} value={m.MaterialID}>
+                          {m.MaterialName || 'Unnamed Material'} ({m.MaterialID})
+                        </option>
+                      ))
+                    )}
+                  </Form.Select>
+                  {errors[`MaterialID${index}`] && (
+                    <Form.Text className="text-danger">{errors[`MaterialID${index}`]}</Form.Text>
+                  )}
+                </Form.Group>
+              </Col>
+              <Col xs={4}>
+                <Form.Group controlId={`formQuantity${index}`}>
+                  <Form.Label>Quantity</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name={`Quantity${index}`}
+                    value={material.Quantity}
+                    onChange={(e) => handleInputChange(e, index)}
+                    placeholder="Enter Quantity"
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                  {errors[`Quantity${index}`] && (
+                    <Form.Text className="text-danger">{errors[`Quantity${index}`]}</Form.Text>
+                  )}
+                </Form.Group>
+              </Col>
+              <Col xs={3} className="d-flex align-items-end">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => removeMaterial(index)}
+                  disabled={formData.MaterialsUsed.length === 1}
+                >
+                  Remove
+                </Button>
+              </Col>
+            </Row>
+          ))}
             {errors.MaterialsUsed && (
               <Form.Text className="text-danger d-block mb-3">{errors.MaterialsUsed}</Form.Text>
             )}
@@ -359,8 +354,8 @@ const ImportExportPage = () => {
                   <option value="">No employees available</option>
                 ) : (
                   employees.map((employee) => (
-                    <option key={employee.EmployeeId} value={employee.EmployeeId}>
-                      {employee.EmployeeName || 'Unnamed Employee'} ({employee.EmployeeId})
+                    <option key={employee.EmployeeID} value={employee.EmployeeID}>
+                      {employee.EmployeeName || 'Unnamed Employee'} ({employee.EmployeeID})
                     </option>
                   ))
                 )}
@@ -373,11 +368,11 @@ const ImportExportPage = () => {
               <Form.Control
                 type="date"
                 name="Date"
-                value={formData.Date}
+                value={formData.transactionDate}
                 onChange={(e) => handleInputChange(e)}
                 required
               />
-              {errors.Date && <Form.Text className="text-danger">{errors.Date}</Form.Text>}
+              {errors.transactionDate && <Form.Text className="text-danger">{errors.transactionDate}</Form.Text>}
             </Form.Group>
 
             <Button variant="primary" type="submit">

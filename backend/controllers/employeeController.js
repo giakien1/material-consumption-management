@@ -14,7 +14,7 @@ const EmployeeController = {
 
     async getEmployeeById(req, res) {
         try{
-            const employee = await Employee.findOne({ EmployeeId: req.params.id })
+            const employee = await Employee.findOne({ EmployeeID: req.params.id })
                 .populate('RoleID')
             if(!employee){
                 return res.status(404).json({message: 'Employee not found'});
@@ -30,7 +30,7 @@ const EmployeeController = {
             const { EmployeeId, EmployeeName, RoleID } = req.body;
 
             // Kiểm tra xem EmployeeId đã tồn tại chưa
-            const existingEmployee = await Employee.findOne({ EmployeeId });
+            const existingEmployee = await Employee.findOne({ EmployeeID: EmployeeId });
             if(existingEmployee) {
                 return res.status(400).json({ message: 'EmployeeId already exists' });
             }
@@ -42,7 +42,7 @@ const EmployeeController = {
             }
 
             const employee = new Employee({ 
-                EmployeeId, 
+                EmployeeID: EmployeeId, 
                 EmployeeName, 
                 RoleID: existingRole._id,
             });
@@ -64,7 +64,7 @@ const EmployeeController = {
             }
     
             const employee = await Employee.findOneAndUpdate(
-                { EmployeeId: req.params.id },
+                { EmployeeID: req.params.id },
                 {
                     EmployeeName,
                     RoleID: role._id,
@@ -85,7 +85,7 @@ const EmployeeController = {
 
     async deleteEmployee(req, res) {
         try{
-            const employee = await Employee.findOneAndDelete({ EmployeeId: req.params.id });
+            const employee = await Employee.findOneAndDelete({ EmployeeID: req.params.id });
             if(!employee){
                 return res.status(404).json({message: 'Employee not found'});
             }

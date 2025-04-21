@@ -32,7 +32,7 @@ const importExportSchema = new mongoose.Schema({
     default: Date.now,
   },
   EmployeeID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Employee',
     required: true,
   },

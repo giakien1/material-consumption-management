@@ -121,8 +121,8 @@ const EmployeePage = () => {
         <tbody>
           {employees.length > 0 ? (
             employees.map((employee) => (
-              <tr key={employee.EmployeeId}>
-                <td>{employee.EmployeeId}</td>
+              <tr key={employee.EmployeeID}>
+                <td>{employee.EmployeeID}</td>
                 <td>{employee.EmployeeName}</td>
                 <td>{employee.RoleID?.RoleName} ({employee.RoleID?.RoleID})</td>
                 <td>
@@ -137,7 +137,7 @@ const EmployeePage = () => {
                   <Button
                     variant="danger"
                     size="sm"
-                    onClick={() => handleDelete(employee.EmployeeId)}
+                    onClick={() => handleDelete(employee.EmployeeID)}
                   >
                     Delete
                   </Button>
