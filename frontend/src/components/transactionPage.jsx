@@ -149,7 +149,7 @@ const ImportExportPage = () => {
 
   return (
     <div>
-      <h2>Quản lý giao dịch nhập/xuất kho</h2>
+      <h2>Import/Export Transaction Management</h2>
 
       <Button variant="primary" onClick={() => setShowModal(true)}>
         Tạo giao dịch
@@ -174,16 +174,15 @@ const ImportExportPage = () => {
               <td>{new Date(transaction.TransactionDate).toLocaleDateString()}</td>
               <td>{transaction.WarehouseID?.WarehouseName}</td>
               <td>{transaction.EmployeeID?.EmployeeName}</td>
-              {/* <ul>
-                {formData.MaterialsUsed.map((item, idx) => {
-                  const material = materials.find(m => m.MaterialID === item.MaterialID);
-                  return (
+              <td>
+                <ul>
+                  {transaction.MaterialsUsed.map((item, idx) => (
                     <li key={idx}>
-                      {material?.MaterialName} - {item.Quantity}
+                      {item.MaterialID?.MaterialName || item.MaterialID} - {item.Quantity}
                     </li>
-                  );
-                })}
-              </ul> */}
+                  ))}
+                </ul>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -202,8 +201,8 @@ const ImportExportPage = () => {
                   <Form.Label>Transaction Type</Form.Label>
                   <Form.Control
                     as="select"
-                    value={formData.Type}
-                    onChange={(e) => handleFormChange('Type', e.target.value)}
+                    value={formData.TransactionType}
+                    onChange={(e) => handleFormChange('TransactionType', e.target.value)}
                     required
                   >
                     <option value="">Choose Transaction Type</option>
