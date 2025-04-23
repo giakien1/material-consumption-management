@@ -6,6 +6,7 @@ import { api } from '../api';
 const MaterialPage = () => {
     const [materials, setMaterials] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [keyword, setKeyword] = useState('');
     const [formData, setFormData] = useState({
         MaterialID: '',
         MaterialName: '',
@@ -22,7 +23,7 @@ const MaterialPage = () => {
 
     const fetchMaterials = async () => {
         try {
-            const response = await api.get('/materials');
+            const response = await api.get(`/materials?keyword=${keyword}`);
             setMaterials([...response.data]);
         } catch (error) {
             console.error('Error fetching materials:', error.message);
@@ -83,6 +84,22 @@ const MaterialPage = () => {
           <Button variant="primary" className="mb-3" onClick={handleShowAdd}>
             Add Material
           </Button>
+
+          <div className="mb-3 d-flex gap-2">
+            <input
+              type="text"
+              placeholder="Material Name"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') fetchMaterials();
+              }}
+              className="form-control"
+            />
+            <button className="btn btn-primary" onClick={fetchMaterials}>
+              Search
+            </button>
+          </div>
     
           <Table striped bordered hover responsive>
             <thead>

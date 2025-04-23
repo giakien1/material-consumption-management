@@ -8,6 +8,7 @@ import MaterialPage from './components/materialPage';
 import WarehousePage from './components/warehousePage';
 import Transaction from './components/transactionPage';
 import WarehouseMaterial  from './components/warehouseMaterialPage';
+import ConsumptionStandard from './components/consumptionStandard';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/warehouse" element={<WarehousePage />} />
           <Route path="/transaction" element={<Transaction />} />
           <Route path="/warehouse-materials" element={<WarehouseMaterial />} />
+          <Route path="/consumption-standard" element={<ConsumptionStandard />} />
         </Routes>
     </Router>
   );

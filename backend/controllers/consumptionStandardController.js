@@ -6,8 +6,9 @@ const consumptionStandardController = {
     async getConsumptionStandards(req, res) {
         try {
             const consumptionStandards = await ConsumptionStandard.find()
-                .populate('product')
-                .populate('material');
+                .populate('ProductID')
+                .populate('MaterialID');
+            console.log(consumptionStandards);
             res.status(200).json(consumptionStandards);
         } catch (error) {
             res.status(500).json({ message: 'Error fetching consumption standards', error });
@@ -17,8 +18,8 @@ const consumptionStandardController = {
     async getConsumptionStandardById(req, res) {
         try {
             const consumptionStandard = await ConsumptionStandard.findOne({StandardID: req.params.id})
-                .populate('product')
-                .populate('material');
+                .populate('ProductID', 'ProductName')
+                .populate('MaterialID', 'MaterialName');
             if (!consumptionStandard) {
                 return res.status(404).json({ message: 'Consumption standard not found' });
             }
@@ -30,12 +31,7 @@ const consumptionStandardController = {
 
     async createConsumptionStandard(req, res) {
         try{
-            const { StandardID, ProductID, MaterialID, StandardQuantity } = req.body;
-            const existingStandard = await ConsumptionStandard.findOne({ StandardID });
-
-            if (existingStandard) {
-                return res.status(400).json({ message: 'Consumption standard already exists' });
-            }
+            const { ProductID, MaterialID, StandardQuantity } = req.body;
 
             const product = await Product.findOne({ ProductID });
             if (!product) {
@@ -47,10 +43,19 @@ const consumptionStandardController = {
                 return res.status(400).json({ message: 'Material not found' });
             }
 
+            // Tạo StandardID mới
+            const lastStandard = await ConsumptionStandard.findOne().sort({ StandardID: -1 });
+            let newID = 'STD001';
+
+            if (lastStandard && lastStandard.StandardID) {
+                const num = parseInt(lastStandard.StandardID.replace('STD', '')) + 1;
+                newID = 'STD' + num.toString().padStart(3, '0');
+            }
+
             const standard = new ConsumptionStandard({
-                StandardID,
-                ProductID,
-                MaterialID,
+                StandardID: newID,
+                ProductID: product._id,
+                MaterialID: material._id,
                 StandardQuantity,
             });
             await standard.save();
@@ -69,27 +74,30 @@ const consumptionStandardController = {
                 return res.status(404).json({ message: 'Consumption standard not found' });
             }
 
-            const product = await Product.findOne(ProductID);
+            const product = await Product.findOne({ ProductID });
             if (!product) {
                 return res.status(400).json({ message: 'Product not found' });
             }
 
-            const material = await Material.findOne(MaterialID);
+            const material = await Material.findOne({ MaterialID });
             if (!material) {
                 return res.status(400).json({ message: 'Material not found' });
             }
 
             const standard = await ConsumptionStandard.findOneAndUpdate(
                 { StandardID: req.params.id },
-                { ProductID, MaterialID, StandardQuantity },
+                { 
+                ProductID: product._id,
+                MaterialID: material._id,
+                StandardQuantity 
+                },
                 { new: true }
             );
             
             if(!standard) {
                 return res.status(404).json({ message: 'Consumption standard not found' });
             }
-            await consumptionStandard.save();
-            res.status(200).json({ message: 'Consumption standard updated successfully', consumptionStandard });
+            res.status(200).json({ message: 'Consumption standard updated successfully', standard });
         } catch (error) {
             res.status(500).json({ message: 'Error updating consumption standard', error });
         }

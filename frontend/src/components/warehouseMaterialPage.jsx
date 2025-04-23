@@ -80,16 +80,16 @@ const WarehouseMaterialPage = () => {
     setShowModal(true);
   };
 
-  const handleShowEdit = (warehouseMaterial) => {
-    setFormData({
-      MaterialID: typeof warehouseMaterial.MaterialID === 'object' ? warehouseMaterial.MaterialID.MaterialID : warehouseMaterial.MaterialID,
-      WarehouseID: typeof warehouseMaterial.WarehouseID === 'object' ? warehouseMaterial.WarehouseID.WarehouseID : warehouseMaterial.WarehouseID,
-      StockQuantity: warehouseMaterial.StockQuantity,
-    });
-    setIsEdit(true);
-    setErrors({});
-    setShowModal(true);
-  };
+  // const handleShowEdit = (warehouseMaterial) => {
+  //   setFormData({
+  //     MaterialID: typeof warehouseMaterial.MaterialID === 'object' ? warehouseMaterial.MaterialID.MaterialID : warehouseMaterial.MaterialID,
+  //     WarehouseID: typeof warehouseMaterial.WarehouseID === 'object' ? warehouseMaterial.WarehouseID.WarehouseID : warehouseMaterial.WarehouseID,
+  //     StockQuantity: warehouseMaterial.StockQuantity,
+  //   });
+  //   setIsEdit(true);
+  //   setErrors({});
+  //   setShowModal(true);
+  // };
 
   const handleClose = () => {
     setShowModal(false);
@@ -165,25 +165,25 @@ const WarehouseMaterialPage = () => {
     }
   };
 
-  const handleDelete = async (materialId, warehouseId) => {
-    if (window.confirm('Are you sure you want to delete this warehouse material? This may affect inventory transactions.')) {
-      try {
-        await api.delete(`/warehouse-materials/${materialId}/${warehouseId}`);
-        toast.success('Warehouse material deleted successfully');
-        if (selectedWarehouse) {
-          await fetchMaterialsByWarehouse(selectedWarehouse);
-        } else {
-          await fetchWarehouseMaterials();
-        }
-      } catch (error) {
-        toast.error('Failed to delete warehouse material: ' + (error.response?.data?.message || error.message));
-      }
-    }
-  };
+  // const handleDelete = async (materialId, warehouseId) => {
+  //   if (window.confirm('Are you sure you want to delete this warehouse material? This may affect inventory transactions.')) {
+  //     try {
+  //       await api.delete(`/warehouse-materials/${materialId}/${warehouseId}`);
+  //       toast.success('Warehouse material deleted successfully');
+  //       if (selectedWarehouse) {
+  //         await fetchMaterialsByWarehouse(selectedWarehouse);
+  //       } else {
+  //         await fetchWarehouseMaterials();
+  //       }
+  //     } catch (error) {
+  //       toast.error('Failed to delete warehouse material: ' + (error.response?.data?.message || error.message));
+  //     }
+  //   }
+  // };
 
   return (
     <div className="container mt-4">
-      <h2>Warehouse Material Management</h2>
+      <h2>Material Search</h2>
       <div className="d-flex justify-content-between mb-3">
         <Button variant="primary" onClick={handleShowAdd}>
           Add Material to Warehouse
@@ -212,7 +212,7 @@ const WarehouseMaterialPage = () => {
             <th>Warehouse ID</th>
             <th>Warehouse Name</th>
             <th>Stock Quantity</th>
-            <th>Actions</th>
+            {/* <th>Actions</th> */}
           </tr>
         </thead>
         <tbody>
@@ -224,7 +224,7 @@ const WarehouseMaterialPage = () => {
                 <td>{wm.WarehouseID?.WarehouseID || wm.WarehouseID || 'Unnamed Warehouse'}</td>
                 <td>{wm.WarehouseID?.WarehouseName || 'Unnamed Warehouse'}</td>
                 <td>{wm.StockQuantity}</td>
-                <td>
+                {/* <td>
                   <Button
                     variant="warning"
                     size="sm"
@@ -243,7 +243,7 @@ const WarehouseMaterialPage = () => {
                   >
                     Delete
                   </Button>
-                </td>
+                </td> */}
               </tr>
             ))
           ) : (

@@ -15,7 +15,7 @@ const productionOrderSchema = new mongoose.Schema({
     type: Date,
   },
   ProductID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
     required: true,
   },
@@ -24,6 +24,11 @@ const productionOrderSchema = new mongoose.Schema({
     required: true,
     min: 1, // Số lượng sản xuất phải dương
   },
+  Status: {
+    type: String,
+    enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'],
+    default: 'Pending',
+  }
 }, {
   timestamps: true,
 });

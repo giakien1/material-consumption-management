@@ -7,12 +7,12 @@ const consumptionStandardSchema = new mongoose.Schema({
     unique: true,
   },
   ProductID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
     required: true,
   },
   MaterialID: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Material',
     required: true,
   },

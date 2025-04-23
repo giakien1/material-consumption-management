@@ -7,14 +7,8 @@ const warehouseMaterialController = {
   async getWarehouseMaterials(req, res) {
     try {
       const warehouseMaterials = await WarehouseMaterial.find()
-        .populate({
-          path: 'MaterialID',
-          select: 'MaterialID MaterialName',
-        })
-        .populate({
-          path: 'WarehouseID',
-          select: 'WarehouseID WarehouseName',
-        });
+      .populate('MaterialID', 'MaterialID MaterialName')
+      .populate('WarehouseID', 'WarehouseID WarehouseName')
       res.status(200).json(warehouseMaterials);
     } catch (error) {
       console.error('Error fetching warehouse materials:', error);
@@ -35,19 +29,15 @@ const warehouseMaterialController = {
       }
 
       const warehouse = await Warehouse.findOne({ WarehouseID: warehouseId });
+      console.log('Found warehouse:', warehouse);
       if (!warehouse) {
         return res.status(400).json({ message: 'Warehouse not found' });
       }
 
       const warehouseMaterials = await WarehouseMaterial.find({ WarehouseID: warehouse._id })
-        .populate({
-          path: 'MaterialID',
-          select: 'MaterialID MaterialName',
-        })
-        .populate({
-          path: 'WarehouseID',
-          select: 'WarehouseID WarehouseName',
-        });
+      .populate('MaterialID', 'MaterialID MaterialName')
+      .populate('WarehouseID', 'WarehouseID WarehouseName');
+      console.log('Found warehouse materials:', warehouseMaterials);
       res.status(200).json(warehouseMaterials);
     } catch (error) {
       console.error('Error fetching materials by warehouse:', error);
@@ -68,14 +58,8 @@ const warehouseMaterialController = {
         MaterialID: material._id,
         WarehouseID: warehouse._id,
       })
-        .populate({
-          path: 'MaterialID',
-          select: 'MaterialID MaterialName',
-        })
-        .populate({
-          path: 'WarehouseID',
-          select: 'WarehouseID WarehouseName',
-        });
+      .populate('MaterialID', 'MaterialID MaterialName')
+      .populate('WarehouseID', 'WarehouseID WarehouseName');
       if (!warehouseMaterial) {
         return res.status(404).json({ message: 'Warehouse material not found' });
       }
@@ -119,14 +103,8 @@ const warehouseMaterialController = {
         MaterialID: material._id,
         WarehouseID: warehouse._id,
       })
-        .populate({
-          path: 'MaterialID',
-          select: 'MaterialID MaterialName',
-        })
-        .populate({
-          path: 'WarehouseID',
-          select: 'WarehouseID WarehouseName',
-        });
+      .populate('MaterialID', 'MaterialID MaterialName')
+      .populate('WarehouseID', 'WarehouseID WarehouseName');
       res.status(201).json(populatedWarehouseMaterial);
     } catch (error) {
       console.error('Error creating warehouse material:', error);
@@ -153,14 +131,8 @@ const warehouseMaterialController = {
         { StockQuantity },
         { new: true }
       )
-        .populate({
-          path: 'MaterialID',
-          select: 'MaterialID MaterialName',
-        })
-        .populate({
-          path: 'WarehouseID',
-          select: 'WarehouseID WarehouseName',
-        });
+      .populate('MaterialID', 'MaterialID MaterialName')
+      .populate('WarehouseID', 'WarehouseID WarehouseName');
       if (!warehouseMaterial) {
         return res.status(404).json({ message: 'Warehouse material not found' });
       }

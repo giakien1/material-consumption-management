@@ -4,8 +4,8 @@ const consumptionStandardController = require('../controllers/consumptionStandar
 
 router.get('/', consumptionStandardController.getConsumptionStandards);
 router.get('/:id', consumptionStandardController.getConsumptionStandardById);
-router.post('/create', consumptionStandardController.createConsumptionStandard);
-router.put('/update/:id', consumptionStandardController.updateConsumptionStandard);
-router.delete('/delete/:id', consumptionStandardController.deleteConsumptionStandard);
+router.post('/', consumptionStandardController.createConsumptionStandard);
+router.put('/:id', consumptionStandardController.updateConsumptionStandard);
+router.delete('/:id', consumptionStandardController.deleteConsumptionStandard);
 
 module.exports = router;
