@@ -39,13 +39,17 @@ const importExportController = {
         const material = await Material.findOne({ MaterialID });
         if (!material) return res.status(404).json({ message: `Vật tư ${MaterialID} không tồn tại` });
   
-        const warehouseMaterial = await WarehouseMaterial.findOne({
+        let warehouseMaterial = await WarehouseMaterial.findOne({
           MaterialID: material._id,
           WarehouseID: warehouse._id,
         });
   
         if (!warehouseMaterial) {
-          return res.status(404).json({ message: `Vật tư ${MaterialID} không có trong kho ${WarehouseId}` });
+          warehouseMaterial = new WarehouseMaterial({
+            MaterialID: material._id,
+            WarehouseID: warehouse._id,
+            StockQuantity: 0,
+          })
         }
   
         if (TransactionType === 'export' && warehouseMaterial.StockQuantity < Quantity) {
@@ -105,8 +109,8 @@ const importExportController = {
     try {
       const transaction = await ImportExport.findOne({ TransactionID: req.params.id })
         .populate('MaterialsUsed.MaterialID')
-        .populate('WarehouseID')
-        .populate('EmployeeID');
+        .populate('WarehouseID', 'WarehouseName')
+        .populate('EmployeeID', 'EmployeeName');
       if (!transaction) {
         return res.status(404).json({ message: 'Transaction not found' });
       }
@@ -120,39 +124,51 @@ const importExportController = {
   async deleteTransaction(req, res) {
     try {
       const transaction = await ImportExport.findOne({ TransactionID: req.params.id });
+  
       if (!transaction) {
         return res.status(404).json({ message: 'Transaction not found' });
       }
-
-      if (transaction.Type === 'export') {
-        for (const item of transaction.MaterialsUsed) {
-          await WarehouseMaterial.findOneAndUpdate(
-            { MaterialID: item.MaterialID, WarehouseID: transaction.WarehouseId },
-            { $inc: { StockQuantity: item.Quantity } },
-            { upsert: true }
-          );
-        }
-      } else if (transaction.Type === 'import') {
-        for (const item of transaction.MaterialsUsed) {
-          const stock = await WarehouseMaterial.findOne({
-            MaterialID: item.MaterialID,
-            WarehouseID: transaction.WarehouseId,
-          });
-          if (!stock || stock.StockQuantity < item.Quantity) {
+  
+      const isImport = transaction.TransactionType === 'Import';
+      const isExport = transaction.TransactionType === 'Export';
+  
+      for (const item of transaction.MaterialsUsed) {
+        const filter = {
+          MaterialID: item.MaterialID,
+          WarehouseID: transaction.WarehouseID,
+        };
+  
+        const warehouseMaterial = await WarehouseMaterial.findOne(filter);
+  
+        if (isExport) {
+          if (!warehouseMaterial) {
+            // Nếu chưa tồn tại thì tạo mới
+            await new WarehouseMaterial({
+              MaterialID: item.MaterialID,
+              WarehouseID: transaction.WarehouseID,
+              StockQuantity: item.Quantity,
+            }).save();
+          } else {
+            warehouseMaterial.StockQuantity += item.Quantity;
+            await warehouseMaterial.save();
+          }
+        } else if (isImport) {
+          if (!warehouseMaterial || warehouseMaterial.StockQuantity < item.Quantity) {
             return res.status(400).json({
-              message: `Không thể xóa: Số lượng trong kho không đủ để hoàn tác MaterialID ${item.MaterialID}`,
+              message: `Không thể xóa: tồn kho không đủ để hoàn tác MaterialID ${item.MaterialID}`,
             });
           }
-          await WarehouseMaterial.findOneAndUpdate(
-            { MaterialID: item.MaterialID, WarehouseID: transaction.WarehouseId },
-            { $inc: { StockQuantity: -item.Quantity } }
-          );
+  
+          warehouseMaterial.StockQuantity -= item.Quantity;
+          await warehouseMaterial.save();
         }
       }
-
+  
       await ImportExport.findOneAndDelete({ TransactionID: req.params.id });
-      res.status(200).json({ message: 'Đã xóa giao dịch' });
+      res.status(200).json({ message: 'Đã xóa giao dịch thành công' });
+  
     } catch (error) {
+      console.error('Lỗi xóa giao dịch:', error);
       res.status(500).json({ message: error.message });
     }
   },

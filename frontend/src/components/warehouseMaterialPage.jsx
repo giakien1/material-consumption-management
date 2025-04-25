@@ -185,9 +185,9 @@ const WarehouseMaterialPage = () => {
     <div className="container mt-4">
       <h2>Material Search</h2>
       <div className="d-flex justify-content-between mb-3">
-        <Button variant="primary" onClick={handleShowAdd}>
+        {/* <Button variant="primary" onClick={handleShowAdd}>
           Add Material to Warehouse
-        </Button>
+        </Button> */}
         <Form.Group controlId="warehouseFilter">
           <Form.Label>Filter by Warehouse</Form.Label>
           <Form.Select
