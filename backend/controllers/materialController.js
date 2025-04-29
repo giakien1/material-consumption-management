@@ -29,16 +29,31 @@ const materialController = {
         }
     },
 
-    // Lấy chi tiết vật tư theo MaterialID
+    // Lấy chi tiết vật tư theo ID
     async getMaterialById(req, res) {
         try {
-        const material = await Material.findOne({ MaterialID: req.params.id });
-        if (!material) {
-            return res.status(404).json({ message: 'Material not found' });
-        }
-        res.status(200).json(material);
+            const material = await Material.findOne({ MaterialID: req.params.id });
+            if (!material) {
+                return res.status(404).json({ message: 'Material not found' });
+            }
+            res.status(200).json(material);
         } catch (error) {
-        res.status(500).json({ message: error.message });
+            res.status(500).json({ message: error.message });
+        }
+    },
+
+    async getMaterialByName(req,res) {
+        try {
+            const { keyword } = req.params;
+            const materials = await Material.find({ MaterialName: { $regex: keyword, $options: 'i' } })
+
+            if (materials.length === 0) {
+                return res.status(404).json({ message: 'Material not found' });
+            }
+
+            res.status(200).json(materials);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
         }
     },
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import './App.css';
+import NavigationBar from './components/navigationBar';
 import ProductPage from './components/productPage';
 import EmployeePage from './components/employeePage';
 import RolePage from './components/rolePage';
@@ -13,6 +14,7 @@ import ConsumptionStandard from './components/consumptionStandard';
 function App() {
   return (
     <Router>
+        <NavigationBar />
         <Routes>
           <Route path="/" element={<ProductPage />} />
           <Route path="/employee" element={<EmployeePage />} />

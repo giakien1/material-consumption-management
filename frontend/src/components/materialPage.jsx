@@ -20,10 +20,15 @@ const MaterialPage = () => {
         fetchMaterials();
     }, []);
 
-    const fetchMaterials = async () => {
+    const fetchMaterials = async (searchKeyword = '') => {
         try {
-            const response = await api.get(`/materials?keyword=${keyword}`);
+          if (searchKeyword) {
+            const response = await api.get(`/materials/search/${searchKeyword}`);
             setMaterials([...response.data]);
+          } else {
+              const response = await api.get('/materials');
+              setMaterials([...response.data]);
+          }
         } catch (error) {
             console.error('Error fetching materials:', error.message);
             alert('Failed to fetch materials');
@@ -68,7 +73,7 @@ const MaterialPage = () => {
     const handleDelete = async (MaterialID) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             try {
-            await api.delete(`/materials/${MaterialID}`); // Dùng api.delete
+            await api.delete(`/materials/${MaterialID}`);
             fetchMaterials();
             } catch (error) {
             console.error('Error deleting product:', error.message);
@@ -91,11 +96,11 @@ const MaterialPage = () => {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') fetchMaterials();
+                if (e.key === 'Enter') fetchMaterials(keyword);
               }}
               className="form-control"
             />
-            <button className="btn btn-primary" onClick={fetchMaterials}>
+            <button className="btn btn-primary" onClick={() => fetchMaterials(keyword)}>
               Search
             </button>
           </div>

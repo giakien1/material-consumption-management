@@ -9,11 +9,17 @@ const ConsumptionStandard = () => {
     const [showModal, setShowModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [keyword, setKeyword] = useState('');
+    const [selectedMaterial, setSelectedMaterial] = useState('');
+    const [selectedQuantity, setSelectedQuantity] = useState('');
+    const [addedMaterials, setAddedMaterials] = useState([]);
+    const [addedQuantities, setAddedQuantities] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const [formData, setFormData] = useState({
         StandardID: '',
         ProductID: '',
-        MaterialID: '',
-        StandardQuantity: 0,
+        MaterialIDs: [],
+        StandardQuantities: [],
     });
     const [errors, setErrors] = useState({});
 
@@ -54,8 +60,8 @@ const ConsumptionStandard = () => {
         setFormData({
             StandardID: '',
             ProductID: products.length > 0 ? products[0].ProductID : '',
-            MaterialID: materials.length > 0 ? materials[0].MaterialID : '',
-            StandardQuantity: 0,
+            MaterialIDs: [],
+            StandardQuantities: [],
         });
         setIsEdit(false);
         setErrors({});
@@ -76,49 +82,109 @@ const ConsumptionStandard = () => {
 
     const handleClose = () => {
         setShowModal(false);
-        setFormData({
+        setFormData((prevData) => ({
+            ...prevData,
             StandardID: '',
             ProductID: products.length > 0 ? products[0].ProductID : '',
-            MaterialID: materials.length > 0 ? materials[0].MaterialID : '',
-            StandardQuantity: 0,
-        });
+            MaterialIDs: [],
+            StandardQuantities: [],
+        }));
+        setAddedMaterials([]); // Reset added materials khi đóng modal
+        setAddedQuantities([]); 
         setErrors({});
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+
+        if (name === "MaterialIDs") {
+            const selectedMaterials = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData({ ...formData, [name]: selectedMaterials });
+    
+            // Tạo mảng các StandardQuantities tương ứng với số lượng vật liệu được chọn
+            const updatedQuantities = selectedMaterials.map(() => 0);  // Mỗi vật liệu có số lượng mặc định là 0
+            setFormData({ ...formData, StandardQuantities: updatedQuantities });
+        } else if (name === "StandardQuantities") {
+            const quantities = value.split(',').map(q => parseFloat(q.trim()));
+            setFormData({ ...formData, [name]: quantities });
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     };
 
     const validateForm = () => {
         const newErrors = {};
-        // if (!formData.StandardID) newErrors.StandardID = 'Standard ID is required';
         if (!formData.ProductID) newErrors.ProductID = 'Product is required';
-        if (!formData.MaterialID) newErrors.MaterialID = 'Material is required';
-        if (parseFloat(formData.StandardQuantity) <= 0) newErrors.StandardQuantity = 'Quantity must be > 0';
+        if (!formData.MaterialIDs.length) newErrors.MaterialIDs = 'At least one material is required';
+        if (formData.MaterialIDs.length !== formData.StandardQuantities.length) {
+            newErrors.StandardQuantities = 'Quantities must match the number of materials';
+        } else {
+            formData.StandardQuantities.forEach((quantity, index) => {
+                if (parseFloat(quantity) <= 0) {
+                    newErrors.StandardQuantities = `Quantity for material ${index + 1} must be > 0`;
+                }
+            });
+        }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
+    };    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
+        if (isSubmitting || !validateForm()) return;
+        
+        setIsSubmitting(true);
+        
+        setFormData(prev => ({
+            ...prev,
+            ProductID: formData.ProductID,
+            MaterialIDs: addedMaterials,
+            StandardQuantities: addedQuantities,
+        }));
+    
         try {
             if (isEdit) {
                 await api.put(`/consumption-standards/${formData.StandardID}`, formData);
             } else {
                 await api.post('/consumption-standards', {
                     ProductID: formData.ProductID,
-                    MaterialID: formData.MaterialID,
-                    StandardQuantity: formData.StandardQuantity
+                    MaterialIDs: formData.MaterialIDs,
+                    StandardQuantities: formData.StandardQuantities,
                 });
             }
+    
             fetchConsumptionStandards();
             handleClose();
         } catch (error) {
             console.error('Error saving consumption standard:', error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
+
+    const handleAddMaterial = () => {
+        console.log("Selected Material:", selectedMaterial);
+        console.log("Selected Quantity:", selectedQuantity);
+
+        if (selectedMaterial && selectedQuantity > 0) {
+            // Thêm material và quantity vào addedMaterials và addedQuantities
+            const updatedMaterials = [...addedMaterials, selectedMaterial];
+            const updatedQuantities = [...addedQuantities, parseFloat(selectedQuantity)];
+    
+            setAddedMaterials(updatedMaterials);
+            setAddedQuantities(updatedQuantities);
+    
+            // Cập nhật lại formData với MaterialIDs và StandardQuantities
+            setFormData(prev => ({
+                ...prev,
+                MaterialIDs: updatedMaterials,  // Cập nhật MaterialIDs
+                StandardQuantities: updatedQuantities,  // Cập nhật StandardQuantities
+            }));
+    
+            setSelectedMaterial('');  // Reset selected material
+            setSelectedQuantity('');  // Reset selected quantity
+        }
+    };   
 
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this consumption standard?')) {
@@ -152,8 +218,7 @@ const ConsumptionStandard = () => {
                     <tr>
                         <th>Standard ID</th>
                         <th>Product</th>
-                        <th>Material</th>
-                        <th>Quantity</th>
+                        <th>Material - Quantity</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -167,8 +232,13 @@ const ConsumptionStandard = () => {
                             <tr key={s.StandardID}>
                                 <td>{s.StandardID}</td>
                                 <td>{s.ProductID?.ProductName}</td>
-                                <td>{s.MaterialID?.MaterialName}</td>
-                                <td>{parseFloat(s.StandardQuantity).toFixed(2)}</td>
+                                <td>
+                                    {s.MaterialIDs && s.MaterialIDs.map((material, index) => (
+                                        <div key={index}>
+                                            {material?.MaterialName || `Material ${index + 1}`} - {s.StandardQuantities?.[index] ?? 0}
+                                        </div>
+                                    ))}
+                                </td>
                                 <td>
                                     <Button size="sm" variant="warning" onClick={() => handleShowEdit(s)}>Edit</Button>{' '}
                                     <Button size="sm" variant="danger" onClick={() => handleDelete(s.StandardID)}>Delete</Button>
@@ -184,19 +254,6 @@ const ConsumptionStandard = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <Form onSubmit={handleSubmit}>
-                        {/* <Form.Group className="mb-3">
-                            <Form.Label>Standard ID</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="StandardID"
-                                value={formData.StandardID}
-                                onChange={handleInputChange}
-                                disabled={isEdit}
-                                isInvalid={!!errors.StandardID}
-                            />
-                            <Form.Control.Feedback type="invalid">{errors.StandardID}</Form.Control.Feedback>
-                        </Form.Group> */}
-
                         <Form.Group className="mb-3">
                             <Form.Label>Product</Form.Label>
                             <Form.Select
@@ -206,7 +263,7 @@ const ConsumptionStandard = () => {
                                 isInvalid={!!errors.ProductID}
                             >
                                 {products.map(p => (
-                                    <option key={p.ProductID} value={p.ProductID}>
+                                    <option key={p._id} value={p._id}>
                                         {p.ProductName} ({p.ProductID})
                                     </option>
                                 ))}
@@ -215,40 +272,68 @@ const ConsumptionStandard = () => {
                         </Form.Group>
 
                         <Form.Group className="mb-3">
-                            <Form.Label>Material</Form.Label>
+                        <Form.Label>Material</Form.Label>
                             <Form.Select
-                                name="MaterialID"
-                                value={formData.MaterialID}
-                                onChange={handleInputChange}
-                                isInvalid={!!errors.MaterialID}
+                                value={selectedMaterial}
+                                onChange={(e) => setSelectedMaterial(e.target.value)}
                             >
-                                {materials.map(m => (
-                                    <option key={m.MaterialID} value={m.MaterialID}>
-                                        {m.MaterialName} ({m.MaterialID})
-                                    </option>
-                                ))}
+                                <option value="">-- Select Material --</option>
+                                {materials
+                                    .filter(m => !formData.MaterialIDs.includes(m.MaterialID)) // không cho chọn lại material đã chọn
+                                    .map(m => (
+                                        <option key={m._id} value={m._id}>
+                                            {m.MaterialName} ({m.MaterialID})
+                                        </option>
+                                    ))}
                             </Form.Select>
-                            <Form.Control.Feedback type="invalid">{errors.MaterialID}</Form.Control.Feedback>
                         </Form.Group>
 
                         <Form.Group className="mb-3">
-                            <Form.Label>Standard Quantity</Form.Label>
+                            <Form.Label>Quantity</Form.Label>
                             <Form.Control
                                 type="number"
-                                name="StandardQuantity"
-                                value={formData.StandardQuantity}
-                                onChange={handleInputChange}
-                                isInvalid={!!errors.StandardQuantity}
                                 min="0"
                                 step="0.01"
+                                value={selectedQuantity}
+                                onChange={(e) => setSelectedQuantity(e.target.value)}
                             />
-                            <Form.Control.Feedback type="invalid">{errors.StandardQuantity}</Form.Control.Feedback>
                         </Form.Group>
 
-                        <div className="d-flex justify-content-end">
-                            <Button variant="secondary" onClick={handleClose} className="me-2">Cancel</Button>
-                            <Button type="submit" variant="primary">Save</Button>
-                        </div>
+                        <Button
+                            variant="primary"
+                            onClick={handleAddMaterial}
+                        >
+                            Add Material
+                        </Button>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Standard Quantities</Form.Label>
+                            {addedMaterials.map((materialID, index) => {
+                                const material = materials.find(m => m._id === materialID);
+                                return (
+                                    <InputGroup key={materialID} className="mb-2">
+                                        <InputGroup.Text>{material ? material.MaterialName : `Material ${index + 1}`}</InputGroup.Text>
+                                        <Form.Control
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={addedQuantities[index] || ''}
+                                            onChange={(e) => {
+                                                const newQuantities = [...addedQuantities];
+                                                newQuantities[index] = parseFloat(e.target.value) || 0;
+                                                setAddedQuantities(newQuantities);
+                                            }}
+                                            isInvalid={!!errors.StandardQuantities}
+                                        />
+                                    </InputGroup>
+                                );
+                            })}
+                            <Form.Control.Feedback type="invalid">{errors.StandardQuantities}</Form.Control.Feedback>
+                        </Form.Group>
+                            <div className="d-flex justify-content-end">
+                                <Button variant="secondary" onClick={handleClose} className="me-2">Cancel</Button>
+                                <Button type="submit" variant="primary">Save</Button>
+                            </div>
                     </Form>
                 </Modal.Body>
             </Modal>

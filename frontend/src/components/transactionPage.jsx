@@ -152,7 +152,7 @@ const ImportExportPage = () => {
       <h2>Import/Export Transaction Management</h2>
 
       <Button variant="primary" onClick={() => setShowModal(true)}>
-        Tạo giao dịch
+        Create Transaction
       </Button>
 
       <Table striped bordered hover className="mt-3">
