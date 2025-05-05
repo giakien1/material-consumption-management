@@ -27,7 +27,7 @@ const EmployeeController = {
 
     async createEmployee(req, res) {
         try{
-            const { EmployeeId, EmployeeName, RoleID } = req.body;
+            const { EmployeeId, EmployeeName, RoleID, Password } = req.body;
 
             // Kiểm tra xem EmployeeId đã tồn tại chưa
             const existingEmployee = await Employee.findOne({ EmployeeID: EmployeeId });
@@ -45,6 +45,7 @@ const EmployeeController = {
                 EmployeeID: EmployeeId, 
                 EmployeeName, 
                 RoleID: existingRole._id,
+                Password: Password,
             });
             await employee.save();
             res.status(201).json(employee);
@@ -55,7 +56,7 @@ const EmployeeController = {
 
     async updateEmployee(req, res) {
         try {
-            const { EmployeeName, RoleID } = req.body;
+            const { EmployeeName, RoleID, Password } = req.body;
     
             // Tìm Role theo RoleID nếu client gửi "R001" thay vì ObjectId
             const role = await Role.findOne({ RoleID });
@@ -68,6 +69,7 @@ const EmployeeController = {
                 {
                     EmployeeName,
                     RoleID: role._id,
+                    Password,
                 },
                 { new: true }
             ).populate('RoleID');

@@ -24,6 +24,7 @@ const materialConsumptionController = {
         ProductID: order.ProductID,
         MaterialID,
       });
+
       if (standard) {
         const expectedQuantity = standard.StandardQuantity * order.ProductionQuantity;
         if (ConsumedQuantity > expectedQuantity) {
@@ -31,6 +32,17 @@ const materialConsumptionController = {
         }
       }
 
+      // Kiểm tra đủ tồn kho
+      if (material.StockQuantity < ConsumedQuantity) {
+        await session.abortTransaction();
+        return res.status(400).json({ message: 'Not enough stock for material' });
+      }
+
+      // Trừ tồn kho
+      material.StockQuantity -= ConsumedQuantity;
+      await material.save();
+
+      // Tạo bản ghi tiêu hao
       const consumption = new MaterialConsumption({
         ConsumptionID,
         OrderID,

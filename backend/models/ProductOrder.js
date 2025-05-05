@@ -24,6 +24,11 @@ const productionOrderSchema = new mongoose.Schema({
     required: true,
     min: 1, // Số lượng sản xuất phải dương
   },
+  WarehouseID: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Warehouse',
+    required: true
+  },  
   Status: {
     type: String,
     enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'],

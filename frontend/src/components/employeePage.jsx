@@ -10,6 +10,7 @@ const EmployeePage = () => {
     EmployeeId: '',
     EmployeeName: '',
     RoleID: '',
+    Password: '',
   });
   const [isEdit, setIsEdit] = useState(false);
 
@@ -41,6 +42,7 @@ const EmployeePage = () => {
       EmployeeId: '',
       EmployeeName: '',
       RoleID: roles.length > 0 ? roles[0].RoleID : '', 
+      Password:'',
     });
     setIsEdit(false);
     setShowModal(true);
@@ -51,6 +53,7 @@ const EmployeePage = () => {
       EmployeeId: employee.EmployeeId,
       EmployeeName: employee.EmployeeName,
       RoleID: employee.RoleID?.RoleID || '',
+      Password: employee.Password || '', 
     });
     setIsEdit(true);
     setShowModal(true);
@@ -62,6 +65,7 @@ const EmployeePage = () => {
       EmployeeId: '',
       EmployeeName: '',
       RoleID: '',
+      Password: '',
     });
   };
 
@@ -77,6 +81,7 @@ const EmployeePage = () => {
         await api.put(`/employees/${formData.EmployeeId}`, {
           EmployeeName: formData.EmployeeName,
           RoleID: formData.RoleID,
+          Password: formData.Password,
         });
         alert('Employee updated successfully');
       } else {
@@ -180,6 +185,17 @@ const EmployeePage = () => {
                 value={formData.EmployeeName}
                 onChange={handleInputChange}
                 placeholder="Enter Employee Name"
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formPassword">
+              <Form.Label>Password</Form.Label>
+              <Form.Control
+                type="password"
+                name="Password"
+                value={formData.Password}
+                onChange={handleInputChange}
+                placeholder="Enter Password"
                 required
               />
             </Form.Group>

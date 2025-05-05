@@ -1,5 +1,4 @@
 const ConsumptionStandard = require('../models/ConsumptionStandard');
-const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Material = require('../models/Material');
 
@@ -38,7 +37,7 @@ const consumptionStandardController = {
             const materialIDsArray = Array.isArray(MaterialIDs) ? MaterialIDs : [MaterialIDs];
 
             console.log(ProductID);
-            const product = await Product.findOne({ _id: ProductID });
+            const product = await Product.findOne({ ProductID: ProductID });
             if (!product) {
                 return res.status(400).json({ message: 'Product not found' });
             }
