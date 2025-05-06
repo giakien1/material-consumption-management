@@ -8,6 +8,7 @@ const warehouseRouter = require('./warehouseRouter');
 const warehouseMaterialRouter = require('./warehouseMaterialRouter');
 const consumptionStandardRouter = require('./consumptionStandardRouter');
 const orderRouter = require('./orderRouter');
+const authRouter = require('./authRouter');
 
 function route(app) {
     app.use('/api/materials', materialRouter);
@@ -19,6 +20,7 @@ function route(app) {
     app.use('/api/warehouse-materials', warehouseMaterialRouter);
     app.use('/api/consumption-standards', consumptionStandardRouter);
     app.use('/api/products', productRouter);
+    app.use('/api/auth', authRouter);
     app.use('/api/orders', orderRouter);
   };
 

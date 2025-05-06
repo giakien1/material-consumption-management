@@ -45,7 +45,7 @@ const EmployeeController = {
                 EmployeeID: EmployeeId, 
                 EmployeeName, 
                 RoleID: existingRole._id,
-                Password: Password,
+                password: Password,
             });
             await employee.save();
             res.status(201).json(employee);
@@ -69,7 +69,7 @@ const EmployeeController = {
                 {
                     EmployeeName,
                     RoleID: role._id,
-                    Password,
+                    password: Password,
                 },
                 { new: true }
             ).populate('RoleID');

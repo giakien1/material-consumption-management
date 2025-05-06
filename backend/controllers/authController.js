@@ -1,13 +1,16 @@
 const jwt = require('jsonwebtoken');
 const Employee = require('../models/Employee');
-const Role = require('../models/Role');
 
 const authController = {
     async login(req,res) {
         const { employeeID, password } = req.body;
+
+        if (!employeeID || !password) {
+            return res.status(400).json({ message: 'EmployeeID and password are required' });
+        }
         try {
             // Kiểm tra xem người dùng có tồn tại không
-            const employee = await Employee.findOne({ employeeID }).populate('RoleID');
+            const employee = await Employee.findOne({ EmployeeID: employeeID }).populate('RoleID');
             if (!employee) {
                 return res.status(401).json({ message: 'Invalid username or password' });
             }

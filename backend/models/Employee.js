@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const employeeSchema = new mongoose.Schema({
   EmployeeID: {
@@ -15,7 +16,7 @@ const employeeSchema = new mongoose.Schema({
     ref: 'Role',
     required: true,
   },
-  Password: {
+  password: {
     type: String,
     required: true,
   }
@@ -24,14 +25,19 @@ const employeeSchema = new mongoose.Schema({
 });
 
 // Mã hóa mật khẩu trước khi lưu vào database
-employeeSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
+employeeSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next(); 
+  try {
+    const hashed = await bcrypt.hash(this.password, 10);
+    this.password = hashed;
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 // So sánh mật khẩu khi đăng nhập
-employeeSchema.methods.comparePassword = async function(inputPassword) {
+employeeSchema.methods.comparePassword = async function (inputPassword) {
   return await bcrypt.compare(inputPassword, this.password);
 };
 

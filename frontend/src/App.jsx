@@ -1,34 +1,48 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import './App.css';
-import NavigationBar from './components/navigationBar';
-import ProductPage from './components/productPage';
-import EmployeePage from './components/employeePage';
-import RolePage from './components/rolePage';
-import MaterialPage from './components/materialPage';
-import WarehousePage from './components/warehousePage';
-import Transaction from './components/transactionPage';
-import WarehouseMaterial  from './components/warehouseMaterialPage';
-import ConsumptionStandard from './components/consumptionStandard';
-import CreateOrder from './components/createOrder';
-import OrderPage from './components/admin/orderPage';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import AdminLayout from './layouts/adminLayout';
+import UserLayout from './layouts/userLayout';
+import LoginPage from './pages/auth/loginPage';
 
 function App() {
+  // Kiểm tra cả project1_token và project1_role để xác định isLoggedIn
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem('project1_token') && !!localStorage.getItem('project1_role')
+  );
+  const [role, setRole] = useState(localStorage.getItem('project1_role')?.toLowerCase());
+
+  const handleLogin = (newRole) => {
+    // Cập nhật isLoggedIn chỉ khi có token và role
+    const hasToken = !!localStorage.getItem('project1_token');
+    const hasRole = !!newRole;
+    setIsLoggedIn(hasToken && hasRole);
+    setRole(newRole);
+    console.log('After login - isLoggedIn:', hasToken && hasRole, 'role:', newRole);
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
+    setRole(null);
+    console.log('After logout - isLoggedIn:', false, 'role:', null);
+  };
+
+  console.log('isLoggedIn:', isLoggedIn, 'role:', role);
+
   return (
     <Router>
-        <NavigationBar />
-        <Routes>
-          <Route path="/" element={<ProductPage />} />
-          <Route path="/employee" element={<EmployeePage />} />
-          <Route path="/role" element={<RolePage />} />
-          <Route path="/material" element={<MaterialPage />} />
-          <Route path="/warehouse" element={<WarehousePage />} />
-          <Route path="/transaction" element={<Transaction />} />
-          <Route path="/warehouse-materials" element={<WarehouseMaterial />} />
-          <Route path="/consumption-standard" element={<ConsumptionStandard />} />
-          <Route path='/orders' element={<CreateOrder />} />
-          <Route path='/admin/orders' element={<OrderPage />} />
-        </Routes>
+      <Routes>
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+        {isLoggedIn ? (
+          role === 'manager' ? (
+            <Route path="/*" element={<AdminLayout onLogout={handleLogout} />} />
+          ) : (
+            <Route path="/*" element={<UserLayout onLogout={handleLogout} />} />
+          )
+        ) : (
+          <Route path="*" element={<Navigate to="/login" />} />
+        )}
+      </Routes>
     </Router>
   );
 }
