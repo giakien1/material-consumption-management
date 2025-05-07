@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form, Row, Col } from 'react-bootstrap';
+import { Button, Table, Modal, Form, Row, Col, Container } from 'react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { api } from '../api';
 
 const ImportExportPage = () => {
-  const [transactions, setTransactions] = useState([]); 
+  const [transactions, setTransactions] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [materials, setMaterials] = useState([]);
@@ -113,83 +113,60 @@ const ImportExportPage = () => {
     setQuantity(1);
     setShowModal(false);
   };
-   
-
-  const columns = [
-    {
-      title: 'Transaction ID',
-      dataIndex: 'TransactionID',
-    },
-    {
-      title: 'Transaction Type',
-      dataIndex: 'TransactionType',
-    },
-    {
-      title: 'Transaction Date',
-      dataIndex: 'TransactionDate',
-      render: (date) => new Date(date).toLocaleDateString(),
-    },
-    {
-      title: 'Warehouse',
-      dataIndex: 'WarehouseID',
-      render: (warehouseId) => {
-        const warehouse = warehouses.find((w) => w._id === warehouseId);
-        return warehouse ? warehouse.WarehouseName : '';
-      },
-    },
-    {
-      title: 'Employee',
-      dataIndex: 'EmployeeID',
-      render: (employeeId) => {
-        const employee = employees.find((e) => e._id === employeeId);
-        return employee ? employee.EmployeeName : '';
-      },
-    },
-  ];
 
   return (
-    <div>
-      <h2>Import/Export Transaction Management</h2>
+    <Container className="my-4 d-flex flex-column align-items-center" style={{ maxWidth: '1200px' }}>
+      <h2 className="text-center mb-4">Import/Export Transaction Management</h2>
 
-      <Button variant="primary" onClick={() => setShowModal(true)}>
-        Create Transaction
-      </Button>
+      <div className="d-flex justify-content-center mb-4">
+        <Button variant="primary" onClick={() => setShowModal(true)}>
+          Create Transaction
+        </Button>
+      </div>
 
-      <Table striped bordered hover className="mt-3">
-        <thead>
-          <tr>
-            <th>Transaction ID</th>
-            <th>Transaction Type</th>
-            <th>Transaction Date</th>
-            <th>Warehouse</th>
-            <th>Employee</th>
-            <th>Materials Used</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map((transaction) => (
-            <tr key={transaction.TransactionID}>
-              <td>{transaction.TransactionID}</td>
-              <td>{transaction.TransactionType}</td>
-              <td>{new Date(transaction.TransactionDate).toLocaleDateString()}</td>
-              <td>{transaction.WarehouseID?.WarehouseName}</td>
-              <td>{transaction.EmployeeID?.EmployeeName}</td>
-              <td>
-                <ul>
-                  {transaction.MaterialsUsed.map((item, idx) => (
-                    <li key={idx}>
-                      {item.MaterialID?.MaterialName || item.MaterialID} - {item.Quantity}
-                    </li>
-                  ))}
-                </ul>
-              </td>
+      <div className="table-responsive">
+        <Table
+          striped
+          bordered
+          hover
+          className="mt-3 mx-auto"
+          style={{ maxWidth: '1000px', width: '100%' }}
+        >
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Transaction Type</th>
+              <th>Transaction Date</th>
+              <th>Warehouse</th>
+              <th>Employee</th>
+              <th>Materials Used</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {transactions.map((transaction) => (
+              <tr key={transaction.TransactionID}>
+                <td>{transaction.TransactionID}</td>
+                <td>{transaction.TransactionType}</td>
+                <td>{new Date(transaction.TransactionDate).toLocaleDateString()}</td>
+                <td>{transaction.WarehouseID?.WarehouseName}</td>
+                <td>{transaction.EmployeeID?.EmployeeName}</td>
+                <td>
+                  <ul>
+                    {transaction.MaterialsUsed.map((item, idx) => (
+                      <li key={idx}>
+                        {item.MaterialID?.MaterialName || item.MaterialID} - {item.Quantity}
+                      </li>
+                    ))}
+                  </ul>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
 
       {/* Modal Tạo Giao Dịch */}
-      <Modal show={showModal} onHide={handleCloseModal}>
+      <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>Create Transaction</Modal.Title>
         </Modal.Header>
@@ -294,14 +271,14 @@ const ImportExportPage = () => {
                 </Form.Group>
               </Col>
 
-              <Col sm={12}>
+              <Col sm={12} className="mt-3">
                 <Button variant="primary" onClick={handleAddMaterial}>
                   Add Material
                 </Button>
               </Col>
             </Row>
 
-            <Button variant="primary" type="submit">
+            <Button variant="primary" type="submit" className="mt-3">
               Create
             </Button>
           </Form>
@@ -309,9 +286,8 @@ const ImportExportPage = () => {
       </Modal>
 
       <ToastContainer />
-    </div>
+    </Container>
   );
-
 };
 
 export default ImportExportPage;

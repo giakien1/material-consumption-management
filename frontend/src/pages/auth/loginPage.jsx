@@ -1,51 +1,50 @@
 import React, { useState } from 'react';
 import { api } from '../../api';
 import { Form, Button, Container, Row, Col, Card, Alert } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom'; // Thêm useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = ({ onLogin }) => {
   const [employeeID, setEmployeeID] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); // Khởi tạo useNavigate
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError('');
+    e.preventDefault();
+    setError('');
 
-  if (!employeeID.trim() || !password.trim()) {
-    setError('Vui lòng nhập đầy đủ Mã nhân viên và Mật khẩu');
-    return;
-  }
-
-  try {
-    const res = await api.post('/auth', {
-      employeeID,
-      password,
-    });
-
-    console.log('API response:', res.data);
-
-    if (res.data && res.data.user && res.data.user.role) {
-      // Xóa các key cũ
-      localStorage.removeItem('role');
-      localStorage.removeItem('employeeName');
-      localStorage.removeItem('token');
-      // Lưu key mới với tiền tố
-      localStorage.setItem('project1_role', res.data.user.role.toLowerCase());
-      localStorage.setItem('project1_employeeName', res.data.user.name);
-      localStorage.setItem('project1_token', res.data.token);
-      console.log('Stored role:', res.data.user.role.toLowerCase());
-      onLogin();
-      navigate('/');
-    } else {
-      setError('Dữ liệu trả về không hợp lệ');
+    if (!employeeID.trim() || !password.trim()) {
+      setError('Vui lòng nhập đầy đủ Mã nhân viên và Mật khẩu');
+      return;
     }
-  } catch (err) {
-    setError(err.response?.data?.message || 'Lỗi đăng nhập');
-    console.error('Login error:', err.response?.data);
-  }
-};
+
+    try {
+      const res = await api.post('/auth', {
+        employeeID,
+        password,
+      });
+
+      console.log('API response:', JSON.stringify(res.data, null, 2));
+
+      if (res.data && res.data.user && res.data.user.role) {
+        const role = res.data.user.role.toLowerCase();
+        localStorage.removeItem('role');
+        localStorage.removeItem('employeeName');
+        localStorage.removeItem('token');
+        localStorage.setItem('project1_role', role);
+        localStorage.setItem('project1_employeeName', res.data.user.name);
+        localStorage.setItem('project1_token', res.data.token);
+        console.log('Stored role:', role);
+        onLogin(role);
+        navigate('/');
+      } else {
+        setError('Dữ liệu trả về không hợp lệ');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Lỗi đăng nhập');
+      console.error('Login error:', err.response?.data);
+    }
+  };
 
   return (
     <Container fluid className="vh-100 d-flex justify-content-center align-items-center bg-light">

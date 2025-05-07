@@ -1,58 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Table, Modal, Form } from 'react-bootstrap';
-import { api } from '../api';
+import { api } from '../../api'; 
 
-const RolePage = () => {
-  const [roles, setRoles] = useState([]);
+
+const ProductPage = () => {
+  const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    RoleID: '',
-    RoleName: '',
+    ProductID: '',
+    ProductName: '',
     Description: '',
   });
+
   const [isEdit, setIsEdit] = useState(false);
 
   useEffect(() => {
-    fetchRoles();
+    fetchProducts();
   }, []);
 
-  const fetchRoles = async () => {
+  const fetchProducts = async () => {
     try {
-      const response = await api.get('/roles');
-      setRoles([...response.data]);
+      const response = await api.get('/products');
+      setProducts([...response.data]);
     } catch (error) {
-      alert('Failed to fetch roles: ' + (error.response?.data?.message || error.message));
+      console.error('Error fetching products:', error.message);
+      alert('Failed to fetch products');
     }
   };
 
   const handleShowAdd = () => {
-    setFormData({
-      RoleID: '',
-      RoleName: '',
-      Description: '',
-    });
+    setFormData({ ProductID: '', ProductName: '', Description: '' });
     setIsEdit(false);
     setShowModal(true);
   };
 
-  const handleShowEdit = (role) => {
-    setFormData({
-      RoleID: role.RoleID,
-      RoleName: role.RoleName,
-      Description: role.Description || '',
-    });
+  const handleShowEdit = (product) => {
+    setFormData(product);
     setIsEdit(true);
     setShowModal(true);
   };
 
-  const handleClose = () => {
-    setShowModal(false);
-    setFormData({
-      RoleID: '',
-      RoleName: '',
-      Description: '',
-    });
-  };
+  const handleClose = () => setShowModal(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -63,74 +51,66 @@ const RolePage = () => {
     e.preventDefault();
     try {
       if (isEdit) {
-        await api.put(`/roles/${formData.RoleID}`, {
-          RoleName: formData.RoleName,
-          Description: formData.Description,
-        });
-        alert('Role updated successfully');
+        await api.put(`/products/${formData.ProductID}`, formData); // Dùng api.put
       } else {
-        await api.post('/roles', {
-          RoleID: formData.RoleID,
-          RoleName: formData.RoleName,
-          Description: formData.Description,
-        });
-        alert('Role added successfully');
+        await api.post('/products', formData); // Dùng api.post
       }
+      fetchProducts();
       handleClose();
-      await fetchRoles();
     } catch (error) {
-      alert('Failed to save role: ' + (error.response?.data?.message || error.message));
+      console.error('Error saving product:', error.message);
+      alert('Failed to save product');
     }
   };
 
-  const handleDelete = async (RoleID) => {
-    if (window.confirm('Are you sure you want to delete this role?')) {
+  const handleDelete = async (ProductID) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await api.delete(`/roles/${RoleID}`);
-        alert('Role deleted successfully');
-        await fetchRoles();
+        await api.delete(`/products/${ProductID}`); // Dùng api.delete
+        fetchProducts();
       } catch (error) {
-        alert('Failed to delete role: ' + (error.response?.data?.message || error.message));
+        console.error('Error deleting product:', error.message);
+        alert('Failed to delete product');
       }
     }
   };
 
   return (
     <div className="container mt-4">
-      <h2>Role Management</h2>
+      <h2>Product Management</h2>
       <Button variant="primary" className="mb-3" onClick={handleShowAdd}>
-        Add Role
+        Add Product
       </Button>
 
       <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th>Role ID</th>
-            <th>Role Name</th>
+            <th>Product ID</th>
+            <th>Product Name</th>
             <th>Description</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {roles.length > 0 ? (
-            roles.map((role) => (
-              <tr key={role.RoleID}>
-                <td>{role.RoleID}</td>
-                <td>{role.RoleName}</td>
-                <td>{role.Description}</td>
+          {products.length > 0 ? (
+            products.map((product) => (
+              <tr key={product.ProductID}>
+                <td>{product.ProductID}</td>
+                <td>{product.ProductName}</td>
+                <td>{product.Description}</td>
                 <td>
                   <Button
                     variant="warning"
                     size="sm"
                     className="me-2"
-                    onClick={() => handleShowEdit(role)}
+                    onClick={() => handleShowEdit(product)}
                   >
                     Edit
                   </Button>
                   <Button
                     variant="danger"
                     size="sm"
-                    onClick={() => handleDelete(role.RoleID)}
+                    onClick={() => handleDelete(product.ProductID)}
                   >
                     Delete
                   </Button>
@@ -140,7 +120,7 @@ const RolePage = () => {
           ) : (
             <tr>
               <td colSpan="4" className="text-center">
-                No roles found
+                No products found
               </td>
             </tr>
           )}
@@ -149,37 +129,38 @@ const RolePage = () => {
 
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>{isEdit ? 'Edit Role' : 'Add Role'}</Modal.Title>
+          <Modal.Title>{isEdit ? 'Edit Product' : 'Add Product'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3" controlId="formRoleID">
-              <Form.Label>Role ID</Form.Label>
+            <Form.Group className="mb-3" controlId="formProductID">
+              <Form.Label>Product ID</Form.Label>
               <Form.Control
                 type="text"
-                name="RoleID"
-                value={formData.RoleID}
+                name="ProductID"
+                value={formData.ProductID}
                 onChange={handleInputChange}
-                placeholder="Enter Role ID"
+                placeholder="Enter Product ID"
                 required
                 disabled={isEdit}
               />
             </Form.Group>
-            <Form.Group className="mb-3" controlId="formRoleName">
-              <Form.Label>Role Name</Form.Label>
+            <Form.Group className="mb-3" controlId="formProductName">
+              <Form.Label>Product Name</Form.Label>
               <Form.Control
                 type="text"
-                name="RoleName"
-                value={formData.RoleName}
+                name="ProductName"
+                value={formData.ProductName}
                 onChange={handleInputChange}
-                placeholder="Enter Role Name"
+                placeholder="Enter Product Name"
                 required
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="formDescription">
               <Form.Label>Description</Form.Label>
               <Form.Control
-                type="text"
+                as="textarea"
+                rows={3}
                 name="Description"
                 value={formData.Description}
                 onChange={handleInputChange}
@@ -199,4 +180,4 @@ const RolePage = () => {
   );
 };
 
-export default RolePage;
+export default ProductPage;

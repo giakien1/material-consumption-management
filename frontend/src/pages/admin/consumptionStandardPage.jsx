@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Table, Modal, Form, InputGroup, FormControl } from 'react-bootstrap';
-import { api } from '../api';
+import { api } from '../../api';
 
 const ConsumptionStandard = () => {
     const [consumptionStandards, setConsumptionStandards] = useState([]);
