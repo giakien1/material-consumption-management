@@ -4,9 +4,22 @@ const Role = require('../models/Role');
 const EmployeeController = {
     async getEmployees(req, res) {
         try{
+            const { page = 1, size = 5 } = req.query; // Lấy số trang và kích thước, mặc định size=10
+            const limit = parseInt(size); // Số lượng đơn sản xuất trên mỗi trang
+            const skip = (page - 1) * limit; // Bỏ qua các đơn đã lấy từ các trang trước
+
             const employees = await Employee.find()
             .populate('RoleID')
-            res.status(200).json(employees);
+            .skip(skip)
+            .limit(limit);
+
+            const totalEmployees = await Employee.countDocuments(); 
+            const totalPages = Math.ceil(totalEmployees / limit); // Tính số trang
+            res.status(200).json({
+                employees,
+                totalPages,
+                cureentPage: parseInt(page),
+            });
         } catch(error){
             res.status(500).json({message: error.message});
         }

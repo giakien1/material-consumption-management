@@ -3,8 +3,22 @@ const Warehouse = require('../models/Warehouse');
 const warehouseController = {
     async getWarehouses(req, res) {
         try{
-            const warehouses = await Warehouse.find({});
-            res.status(200).json(warehouses);
+            const { page = 1, size = 5 } = req.query; // Lấy số trang và kích thước, mặc định size=10
+            const limit = parseInt(size); // Số lượng đơn sản xuất trên mỗi trang
+            const skip = (page - 1) * limit; // Bỏ qua các đơn đã lấy từ các trang trước
+
+            const warehouses = await Warehouse.find()
+                .skip(skip)
+                .limit(limit);
+
+            const totalWarehouses = await Warehouse.countDocuments(); // Tổng số đơn sản xuất
+            const totalPages = Math.ceil(totalWarehouses / limit); // Tính số trang
+              
+            res.status(200).json({
+                warehouses,
+                totalPages,
+                currentPage: parseInt(page),
+            });
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: 'Server error' });

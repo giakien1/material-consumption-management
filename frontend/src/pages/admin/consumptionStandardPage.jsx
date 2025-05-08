@@ -41,9 +41,15 @@ const ConsumptionStandard = () => {
     const fetchProducts = async () => {
         try {
             const response = await api.get('/products');
-            setProducts(response.data);
+            if (Array.isArray(response.data)) {
+                setProducts(response.data);
+            } else {
+                console.warn('Products data is not an array:', response.data);
+                setProducts([]);
+            }
         } catch (error) {
             console.error('Error fetching products:', error);
+            setProducts([]); 
         }
     };
 

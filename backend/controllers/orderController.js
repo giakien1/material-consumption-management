@@ -11,10 +11,24 @@ const productionOrderController = {
   // Lấy danh sách đơn sản xuất
   async getOrders(req, res) {
     try {
+      const { page = 1, size = 5 } = req.query; // Lấy số trang và kích thước, mặc định size=10
+      const limit = parseInt(size); // Số lượng đơn sản xuất trên mỗi trang
+      const skip = (page - 1) * limit; // Bỏ qua các đơn đã lấy từ các trang trước
+  
       const orders = await ProductionOrder.find()
-        .populate('ProductID')
-        .populate('WarehouseID');
-      res.status(200).json(orders);
+        .populate('ProductID') 
+        .populate('WarehouseID') 
+        .skip(skip)
+        .limit(limit);
+  
+      const totalOrders = await ProductionOrder.countDocuments(); // Tổng số đơn sản xuất
+      const totalPages = Math.ceil(totalOrders / limit); // Tính số trang
+  
+      res.status(200).json({
+        orders,
+        totalPages,
+        currentPage: parseInt(page),
+      });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -24,7 +38,6 @@ const productionOrderController = {
   async createOrder(req, res) {
     try {
       const { ProductID, ProductionQuantity, CompletionDate, WarehouseID } = req.body;
-  
       const product = await Product.findById(ProductID);
       if (!product) {
         return res.status(404).json({ message: 'Product not found' });
@@ -34,6 +47,11 @@ const productionOrderController = {
       const warehouse = await Warehouse.findOne({ _id: WarehouseID });
       if (!warehouse) {
         return res.status(404).json({ message: 'Warehouse not found' });
+      }
+
+      const consumotionStandard = await ConsumptionStandard.findOne({ ProductID: product._id });
+      if(!consumotionStandard){
+        return res.status(404).json({ message: 'Consumption standard have not been created yet!' });
       }
   
       const newOrder = new ProductionOrder({

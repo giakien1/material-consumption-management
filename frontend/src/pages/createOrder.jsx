@@ -7,6 +7,7 @@ import {
   Form,
   Alert,
   Spinner,
+  Pagination,
 } from 'react-bootstrap';
 
 const ProductionOrderPage = () => {
@@ -25,11 +26,15 @@ const ProductionOrderPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     fetchOrders();
     fetchProducts();
     fetchWarehouses();
-  }, []);
+  }, [currentPage]);
 
   const fetchWarehouses = async () => {
       try {
@@ -42,19 +47,50 @@ const ProductionOrderPage = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await api.get('/orders');
-      setOrders(res.data);
+      const res = await api.get('/orders', {
+        params: {
+          page: currentPage,
+          size: pageSize, 
+        },
+      });
+      console.log('Orders API Response:', res.data);
+      if (Array.isArray(res.data.orders)) {
+        setOrders(res.data.orders);
+        setTotalPages(res.data.totalPages || 1);
+      } else {
+        console.warn('Orders data is not an array:', res.data);
+        setOrders([]);
+        setTotalPages(1);
+        setMessage({ type: 'danger', text: 'Failed to load orders.' });
+      }
     } catch (err) {
-      console.error('Lỗi khi lấy đơn sản xuất:', err.message);
+      console.error('Error fetching orders:', err.message);
+      setOrders([]);
+      setTotalPages(1);
+      setMessage({ type: 'danger', text: 'Failed to load orders.' });
     }
   };
 
   const fetchProducts = async () => {
     try {
-      const res = await api.get('/products');
-      setProducts(res.data);
+      const res = await api.get('/products', {
+        params: {
+          page: 1,
+          size: 100, 
+        },
+      });
+      console.log('Products API Response:', res.data);
+      if (Array.isArray(res.data.products)) {
+        setProducts(res.data.products);
+      } else {
+        console.warn('Products data is not an array:', res.data);
+        setProducts([]);
+        setMessage({ type: 'danger', text: 'Failed to load products.' });
+      }
     } catch (err) {
-      console.error('Lỗi khi lấy sản phẩm:', err.message);
+      console.error('Error fetching products:', err.message);
+      setProducts([]);
+      setMessage({ type: 'danger', text: 'Failed to load products.' });
     }
   };
 
@@ -88,12 +124,16 @@ const ProductionOrderPage = () => {
     setLoading(false);
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="container mt-4">
-      <h3>Đơn Sản Xuất</h3>
+      <h3>Order</h3>
 
       <Button className="mb-3" onClick={() => setShowModal(true)}>
-        + Tạo đơn mới
+        + Create Order
       </Button>
 
       {/* Bảng danh sách đơn */}
@@ -101,11 +141,11 @@ const ProductionOrderPage = () => {
         <thead>
           <tr>
             <th>OrderID</th>
-            <th>Sản phẩm</th>
-            <th>Số lượng</th>
-            <th>Trạng thái</th>
+            <th>Products</th>
+            <th>Quantity</th>
+            <th>Status</th>
             <th>Material From</th>
-            <th>Ngày tạo</th>
+            <th>Date</th>
           </tr>
         </thead>
         <tbody>
@@ -122,10 +162,30 @@ const ProductionOrderPage = () => {
         </tbody>
       </Table>
 
+      <Pagination>
+        <Pagination.Prev
+          disabled={currentPage === 1}
+          onClick={() => handlePageChange(currentPage - 1)}
+        />
+        {[...Array(totalPages)].map((_, index) => (
+          <Pagination.Item
+            key={index + 1}
+            active={index + 1 === currentPage}
+            onClick={() => handlePageChange(index + 1)}
+          >
+            {index + 1}
+          </Pagination.Item>
+        ))}
+        <Pagination.Next
+          disabled={currentPage === totalPages}
+          onClick={() => handlePageChange(currentPage + 1)}
+        />
+      </Pagination>
+
       {/* Modal tạo đơn */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Tạo Đơn Sản Xuất</Modal.Title>
+          <Modal.Title>Create Order</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {message && <Alert variant={message.type}>{message.text}</Alert>}
@@ -133,13 +193,13 @@ const ProductionOrderPage = () => {
           <Form onSubmit={handleCreateOrder}>
 
             <Form.Group className="mb-3">
-              <Form.Label>Sản phẩm</Form.Label>
+              <Form.Label>Product Using</Form.Label>
               <Form.Select
                 value={productID}
                 onChange={(e) => setProductID(e.target.value)}
                 required
               >
-                <option value="">-- Chọn sản phẩm --</option>
+                <option value="">-- Choose Product --</option>
                 {products.map((p) => (
                   <option key={p._id} value={p._id}>
                     {p.ProductName}
@@ -149,7 +209,7 @@ const ProductionOrderPage = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Số lượng sản xuất</Form.Label>
+              <Form.Label>Quantity</Form.Label>
               <Form.Control
                 type="number"
                 min="1"
@@ -160,13 +220,13 @@ const ProductionOrderPage = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Kho sản xuất</Form.Label>
+              <Form.Label>Warehouse</Form.Label>
               <Form.Select
                 value={warehouseID}
                 onChange={(e) => setWarehouseID(e.target.value)}
                 required
               >
-                <option value="">-- Chọn kho --</option>
+                <option value="">-- Choose Warehouse --</option>
                 {warehouses.map((w) => (
                   <option key={w._id} value={w._id}>{w.WarehouseName}</option>
                 ))}
@@ -174,7 +234,7 @@ const ProductionOrderPage = () => {
             </Form.Group>
 
             <Button type="submit" disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : 'Tạo đơn'}
+              {loading ? <Spinner animation="border" size="sm" /> : 'Create'}
             </Button>
           </Form>
         </Modal.Body>

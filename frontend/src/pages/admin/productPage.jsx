@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form } from 'react-bootstrap';
-import { api } from '../../api'; 
-
+import { Button, Table, Modal, Form, Pagination } from 'react-bootstrap';
+import { api } from '../../api';
 
 const ProductPage = () => {
   const [products, setProducts] = useState([]);
@@ -13,15 +12,31 @@ const ProductPage = () => {
   });
 
   const [isEdit, setIsEdit] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const [totalPages, setTotalPages] = useState(0);  // Tổng số trang
+  const [pageSize, setPageSize] = useState(5);      // Số lượng sản phẩm mỗi trang
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [currentPage, pageSize]); // Chạy lại khi trang hoặc pageSize thay đổi
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/products');
-      setProducts([...response.data]);
+      const response = await api.get('/products', {
+        params: {
+          page: currentPage,
+          size: pageSize,
+        },
+      });
+      console.log('Products API Response:', response.data);
+      if (response.data && Array.isArray(response.data.products)) {
+        setProducts(response.data.products); // Lưu danh sách sản phẩm
+        setTotalPages(response.data.totalPages || 1); // Lưu tổng số trang
+      } else {
+        console.warn('Products data is not an array:', response.data);
+        setProducts([]); // Nếu dữ liệu không hợp lệ, set products là mảng rỗng
+        alert('Failed to fetch products');
+      }
     } catch (error) {
       console.error('Error fetching products:', error.message);
       alert('Failed to fetch products');
@@ -73,6 +88,11 @@ const ProductPage = () => {
         alert('Failed to delete product');
       }
     }
+  };
+
+  // Xử lý chuyển trang
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -127,6 +147,28 @@ const ProductPage = () => {
         </tbody>
       </Table>
 
+      {/* Pagination Controls */}
+      <Pagination>
+        <Pagination.Prev
+          disabled={currentPage === 1}
+          onClick={() => handlePageChange(currentPage - 1)}
+        />
+        {[...Array(totalPages)].map((_, index) => (
+          <Pagination.Item
+            key={index + 1}
+            active={index + 1 === currentPage}
+            onClick={() => handlePageChange(index + 1)}
+          >
+            {index + 1}
+          </Pagination.Item>
+        ))}
+        <Pagination.Next
+          disabled={currentPage === totalPages}
+          onClick={() => handlePageChange(currentPage + 1)}
+        />
+      </Pagination>
+
+      {/* Modal Form */}
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>{isEdit ? 'Edit Product' : 'Add Product'}</Modal.Title>

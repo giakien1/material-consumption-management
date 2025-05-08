@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form } from 'react-bootstrap';
+import { Button, Table, Modal, Form, Pagination } from 'react-bootstrap';
 import { api } from '../../api'; 
 
 const WarehousePage = () => {
+    // Phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+
+    const [message, setMessage] = useState(null);
     const [warehouses, setWarehouses] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
@@ -15,12 +21,13 @@ const WarehousePage = () => {
 
     useEffect(() => {
         fetchWarehouses();
-    }, []);
+    }, [currentPage, pageSize]);
 
     const fetchWarehouses = async () => {
         try {
-            const response = await api.get('/warehouses');
-            setWarehouses([...response.data]);
+            const response = await api.get(`/warehouses?page=${currentPage}&pageSize=${pageSize}`);
+            setWarehouses(response.data.warehouses);
+            setTotalPages(response.data.totalPages);
         } catch (error) {
             console.error('Error fetching warehouses:', error.message);
             alert('Failed to fetch warehouses');
@@ -74,6 +81,10 @@ const WarehousePage = () => {
         }
     };
 
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
     return (
         <div className="container mt-4">
             <h2>Warehouse Management</h2>
@@ -125,6 +136,26 @@ const WarehousePage = () => {
                 )}
             </tbody>
             </Table>
+
+            <Pagination>
+                <Pagination.Prev
+                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                />
+                {[...Array(totalPages)].map((_, index) => (
+                    <Pagination.Item
+                    key={index + 1}
+                    active={index + 1 === currentPage}
+                    onClick={() => handlePageChange(index + 1)}
+                    >
+                    {index + 1}
+                    </Pagination.Item>
+                ))}
+                <Pagination.Next
+                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                />
+            </Pagination>
     
             <Modal show={showModal} onHide={handleClose}>
             <Modal.Header closeButton>

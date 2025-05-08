@@ -6,10 +6,24 @@ const warehouseMaterialController = {
   // Lấy danh sách tất cả vật tư trong các kho
   async getWarehouseMaterials(req, res) {
     try {
+      const { page = 1, size = 5 } = req.query; // Lấy số trang và kích thước, mặc định size=10
+      const limit = parseInt(size); // Số lượng đơn sản xuất trên mỗi trang
+      const skip = (page - 1) * limit; // Bỏ qua các đơn đã lấy từ các trang trước
+
       const warehouseMaterials = await WarehouseMaterial.find()
-      .populate('MaterialID', 'MaterialID MaterialName')
-      .populate('WarehouseID', 'WarehouseID WarehouseName')
-      res.status(200).json(warehouseMaterials);
+        .populate('MaterialID', 'MaterialID MaterialName')
+        .populate('WarehouseID', 'WarehouseID WarehouseName')
+        .skip(skip)
+        .limit(limit);
+      
+      const totalOrders = await ProductionOrder.countDocuments(); // Tổng số đơn sản xuất
+      const totalPages = Math.ceil(totalOrders / limit); // Tính số trang  
+        
+      res.status(200).json({
+        warehouseMaterials,
+        totalPages,
+        currentPage: parseInt(page),
+      });
     } catch (error) {
       console.error('Error fetching warehouse materials:', error);
       res.status(500).json({ message: 'Failed to fetch warehouse materials' });

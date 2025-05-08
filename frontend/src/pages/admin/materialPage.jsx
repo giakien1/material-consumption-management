@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form } from 'react-bootstrap';
+import { Button, Table, Modal, Form, Pagination } from 'react-bootstrap';
 import { api } from '../../api'; 
 
 
 const MaterialPage = () => {
+    const [message, setMessage] = useState(null);
+    // Phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+
     const [materials, setMaterials] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [keyword, setKeyword] = useState('');
@@ -18,7 +24,7 @@ const MaterialPage = () => {
 
     useEffect(() => {
         fetchMaterials();
-    }, []);
+    }, [currentPage, pageSize]);
 
     const fetchMaterials = async (searchKeyword = '') => {
         try {
@@ -26,8 +32,10 @@ const MaterialPage = () => {
             const response = await api.get(`/materials/search/${searchKeyword}`);
             setMaterials([...response.data]);
           } else {
-              const response = await api.get('/materials');
-              setMaterials([...response.data]);
+            const response = await api.get(`/materials?page=${currentPage}&pageSize=${pageSize}`);
+            setMaterials([...response.data.materials]);
+            setTotalPages(response.data.totalPages);
+            setMessage({ type: 'danger', text: 'Failed to load employees.' });
           }
         } catch (error) {
             console.error('Error fetching materials:', error.message);
@@ -80,6 +88,10 @@ const MaterialPage = () => {
             alert('Failed to delete product');
             }
         }
+    };
+
+    const handlePageChange = (page) => {
+      setCurrentPage(page);
     };
 
     return (
@@ -151,7 +163,27 @@ const MaterialPage = () => {
               )}
             </tbody>
           </Table>
-    
+
+          <Pagination>
+            <Pagination.Prev
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            />
+            {[...Array(totalPages)].map((_, index) => (
+              <Pagination.Item
+                key={index + 1}
+                active={index + 1 === currentPage}
+                onClick={() => handlePageChange(index + 1)}
+              >
+                {index + 1}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next
+              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+            />
+          </Pagination>
+        
           <Modal show={showModal} onHide={handleClose}>
             <Modal.Header closeButton>
               <Modal.Title>{isEdit ? 'Edit Material' : 'Add Material'}</Modal.Title>

@@ -3,7 +3,7 @@
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: #213547;
   background-color: #ffffff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,11 +18,11 @@
 
 .app-content a {
   font-weight: 500;
-  color: #5458a9;
+  color: #ffffff;
   text-decoration: inherit;
 }
 .app-content a:hover {
-  color: #fcfcfd;
+  color: #adadb1;
 }
 
 .app-content h1 {
@@ -46,6 +46,10 @@
 .app-content button:focus,
 .app-content button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+.p-notfound{
+  color: #213547;
 }
 
 @media (prefers-color-scheme: light) {

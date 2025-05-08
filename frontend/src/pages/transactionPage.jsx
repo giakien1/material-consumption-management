@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form, Row, Col, Container } from 'react-bootstrap';
+import { Button, Table, Modal, Form, Row, Col, Container, Pagination } from 'react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { api } from '../api';
 
 const ImportExportPage = () => {
+  // Phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [transactions, setTransactions] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -25,13 +30,22 @@ const ImportExportPage = () => {
     fetchWarehouses();
     fetchEmployees();
     fetchMaterials();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const fetchTransactions = async () => {
     try {
-      const response = await api.get('/import-exports');
-      console.log(response.data);
-      setTransactions(response.data);
+      const response = await api.get('/import-exports', {
+        params: {
+          page: currentPage,
+          pageSize: pageSize,
+        },
+      });
+      if (response.data && response.data.transactions) {
+        setTransactions(response.data.transactions);
+        setTotalPages(response.data.totalPages || 1);
+      } else {
+        console.error('Unexpected response format:', response.data);
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
@@ -40,42 +54,55 @@ const ImportExportPage = () => {
   const fetchWarehouses = async () => {
     try {
       const response = await api.get('/warehouses');
-      setWarehouses(response.data);
+      console.log('Warehouses response:', response); // Log the full response to inspect it
+      if (response.data && response.data.warehouses && Array.isArray(response.data.warehouses)) {
+        setWarehouses(response.data.warehouses); // Use the 'warehouses' array inside the response object
+      } else {
+        console.error('Unexpected response format for warehouses:', response.data);
+      }
     } catch (error) {
       console.error('Error fetching warehouses:', error);
     }
   };
-
+  
   const fetchEmployees = async () => {
     try {
       const response = await api.get('/employees');
-      setEmployees(response.data);
+      console.log('Employees response:', response); // Log the full response to inspect it
+      if (response.data && response.data.employees && Array.isArray(response.data.employees)) {
+        setEmployees(response.data.employees); // Use the 'employees' array inside the response object
+      } else {
+        console.error('Unexpected response format for employees:', response.data);
+      }
     } catch (error) {
       console.error('Error fetching employees:', error);
     }
   };
-
+  
   const fetchMaterials = async () => {
     try {
       const response = await api.get('/materials');
-      setMaterials(response.data);
+      console.log('Materials response:', response); // Log the full response to inspect it
+      if (response.data && response.data.materials && Array.isArray(response.data.materials)) {
+        setMaterials(response.data.materials); // Use the 'materials' array inside the response object
+      } else {
+        console.error('Unexpected response format for materials:', response.data);
+      }
     } catch (error) {
       console.error('Error fetching materials:', error);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    api
-      .post('/import-exports', formData)
-      .then((response) => {
-        toast.success(`Giao dịch ${response.data.transaction.TransactionType} thành công!`);
-        setTransactions([...transactions, response.data.transaction]);
-        setShowModal(false);
-      })
-      .catch((error) => {
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
-      });
+    try {
+      const response = await api.post('/import-exports', formData);
+      toast.success(`Giao dịch ${response.data.transaction.TransactionType} thành công!`);
+      setTransactions([...transactions, response.data.transaction]);
+      setShowModal(false);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    }
   };
 
   const handleAddMaterial = () => {
@@ -114,9 +141,13 @@ const ImportExportPage = () => {
     setShowModal(false);
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <Container className="my-4 d-flex flex-column align-items-center" style={{ maxWidth: '1200px' }}>
-      <h2 className="text-center mb-4">Import/Export Transaction Management</h2>
+      <h2 className="text-center mb-4" style={{color: '#213547'}}>Import/Export Transaction Management</h2>
 
       <div className="d-flex justify-content-center mb-4">
         <Button variant="primary" onClick={() => setShowModal(true)}>
@@ -125,20 +156,14 @@ const ImportExportPage = () => {
       </div>
 
       <div className="table-responsive">
-        <Table
-          striped
-          bordered
-          hover
-          className="mt-3 mx-auto"
-          style={{ maxWidth: '1000px', width: '100%' }}
-        >
+        <Table striped bordered hover className="mt-3 mx-auto" style={{ maxWidth: '1000px', width: '100%' }}>
           <thead>
             <tr>
               <th>Transaction ID</th>
               <th>Transaction Type</th>
               <th>Transaction Date</th>
               <th>Warehouse</th>
-              <th>Employee</th>
+              <th style={{ width: '150px' }}>Employee</th>
               <th>Materials Used</th>
             </tr>
           </thead>
@@ -149,7 +174,9 @@ const ImportExportPage = () => {
                 <td>{transaction.TransactionType}</td>
                 <td>{new Date(transaction.TransactionDate).toLocaleDateString()}</td>
                 <td>{transaction.WarehouseID?.WarehouseName}</td>
-                <td>{transaction.EmployeeID?.EmployeeName}</td>
+                <td style={{ wordWrap: 'break-word', whiteSpace: 'normal' }}>
+                  {transaction.EmployeeID?.EmployeeName}
+                </td>
                 <td>
                   <ul>
                     {transaction.MaterialsUsed.map((item, idx) => (
@@ -164,6 +191,23 @@ const ImportExportPage = () => {
           </tbody>
         </Table>
       </div>
+
+      <Pagination>
+        <Pagination.Prev disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)} />
+        {[...Array(totalPages)].map((_, index) => (
+          <Pagination.Item
+            key={index + 1}
+            active={index + 1 === currentPage}
+            onClick={() => handlePageChange(index + 1)}
+          >
+            {index + 1}
+          </Pagination.Item>
+        ))}
+        <Pagination.Next
+          disabled={currentPage === totalPages}
+          onClick={() => handlePageChange(currentPage + 1)}
+        />
+      </Pagination>
 
       {/* Modal Tạo Giao Dịch */}
       <Modal show={showModal} onHide={handleCloseModal} centered>
@@ -210,7 +254,7 @@ const ImportExportPage = () => {
 
               <Col sm={6}>
                 <Form.Group controlId="formEmployee">
-                  <Form.Label>Nhân viên</Form.Label>
+                  <Form.Label>Employee</Form.Label>
                   <Form.Control
                     as="select"
                     value={formData.EmployeeId}

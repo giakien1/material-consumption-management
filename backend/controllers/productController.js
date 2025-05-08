@@ -3,8 +3,22 @@ const Product = require('../models/Product');
 const productController = {
     async getProducts(req, res) {
         try {
-            const products = await Product.find();
-            res.status(200).json(products);
+            const { page = 1, size = 5 } = req.query; // Lấy số trang và kích thước từ query parameters
+            const limit = parseInt(size); // Số lượng sản phẩm trên mỗi trang
+            const skip = (page - 1) * limit; // Bỏ qua sản phẩm đã lấy từ các trang trước
+
+            const products = await Product.find()
+                .skip(skip)
+                .limit(limit);
+
+            const totalProducts = await Product.countDocuments(); // Tổng số sản phẩm
+
+            const totalPages = Math.ceil(totalProducts / limit); // Tính số trang
+            res.status(200).json({
+                products,
+                totalPages,
+                currentPage: parseInt(page),
+              });
         } catch (error) {
             res.status(500).json({ message: error.message });
         }

@@ -8,7 +8,7 @@ const NotFoundPage = () => {
       <Row>
         <Col className="text-center">
           <h1>404 - Page Not Found</h1>
-          <p>The page you are looking for does not exist.</p>
+          <p className='p-notfound'>The page you are looking for does not exist.<span> Click here to go back home</span></p>
           <Button as={Link} to="/" variant="primary">
             Go to Home
           </Button>

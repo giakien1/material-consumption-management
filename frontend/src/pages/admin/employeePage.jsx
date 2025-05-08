@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form } from 'react-bootstrap';
+import { Button, Table, Modal, Form, Pagination, } from 'react-bootstrap';
 import { api } from '../../api';
 
 const EmployeePage = () => {
+
+  // Phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [message, setMessage] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [roles, setRoles] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -17,16 +24,31 @@ const EmployeePage = () => {
   useEffect(() => {
     fetchEmployees();
     fetchRoles();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const fetchEmployees = async () => {
     try {
-      const response = await api.get('/employees');
-      setEmployees([...response.data]);
+      const response = await api.get('/employees', {
+        params: {
+          page: currentPage,
+          pageSize: pageSize,
+        },
+      });
+  
+      if (Array.isArray(response.data.employees)) {
+        setEmployees(response.data.employees);
+        setTotalPages(response.data.totalPages || 1);
+      } else {
+        console.warn('Employees data is not an array:', response.data);
+        setEmployees([]);
+        setTotalPages(1);
+        setMessage({ type: 'danger', text: 'Failed to load employees.' });
+      }
     } catch (error) {
       alert('Failed to fetch employees: ' + error.message);
     }
   };
+  
 
   const fetchRoles = async () => {
     try {
@@ -107,6 +129,10 @@ const EmployeePage = () => {
     }
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="container mt-4">
       <h2>Employee Management</h2>
@@ -158,6 +184,26 @@ const EmployeePage = () => {
           )}
         </tbody>
       </Table>
+
+      <Pagination>
+        <Pagination.Prev
+          disabled={currentPage === 1}
+          onClick={() => handlePageChange(currentPage - 1)}
+        />
+        {[...Array(totalPages)].map((_, index) => (
+          <Pagination.Item
+            key={index + 1}
+            active={index + 1 === currentPage}
+            onClick={() => handlePageChange(index + 1)}
+          >
+            {index + 1}
+          </Pagination.Item>
+        ))}
+        <Pagination.Next
+          disabled={currentPage === totalPages}
+          onClick={() => handlePageChange(currentPage + 1)}
+        />
+      </Pagination>
 
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>

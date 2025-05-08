@@ -5,10 +5,24 @@ const Material = require('../models/Material');
 const consumptionStandardController = {
     async getConsumptionStandards(req, res) {
         try {
+            const { page = 1, size = 5 } = req.query; // Lấy số trang và kích thước, mặc định size=10
+            const limit = parseInt(size); // Số lượng đơn sản xuất trên mỗi trang
+            const skip = (page - 1) * limit; // Bỏ qua các đơn đã lấy từ các trang trước
+
             const consumptionStandards = await ConsumptionStandard.find()
                 .populate('ProductID')
-                .populate('MaterialIDs');
-            res.status(200).json(consumptionStandards);
+                .populate('MaterialIDs')
+                .skip(skip)
+                .limit(limit);
+
+            const totalOrders = await ProductionOrder.countDocuments(); // Tổng số đơn sản xuất
+            const totalPages = Math.ceil(totalOrders / limit); // Tính số trang
+
+            res.status(200).json({
+                consumptionStandards,
+                totalPages,
+                currentPage: parseInt(page),
+            });
         } catch (error) {
             res.status(500).json({ message: 'Error fetching consumption standards', error });
         }

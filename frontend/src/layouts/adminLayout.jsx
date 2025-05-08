@@ -17,7 +17,7 @@ const AdminLayout = ({ onLogout }) => (
   <div className='app-content'>
     <AdminNavBar onLogout={onLogout}/>
     <Routes>
-      <Route path="/" element={<OrderPage />} />
+      <Route path="/" element={<ProductPage />} />
       <Route path="/employee" element={<EmployeePage />} />
       <Route path="/role" element={<RolePage />} />
       <Route path="/material" element={<MaterialPage />} />
@@ -27,7 +27,6 @@ const AdminLayout = ({ onLogout }) => (
       <Route path="/warehouse-materials" element={<WarehouseMaterialPage />} />
       <Route path="/consumption-standard" element={<ConsumptionStandardPage />} />
       <Route path="/orders" element={<OrderPage />} />
-      <Route path="/products" element={<ProductPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   </div>

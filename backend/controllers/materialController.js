@@ -22,10 +22,23 @@ const materialController = {
     // Lấy danh sách vật tư
     async getMaterials(req, res) {
         try {
-        const materials = await Material.find();
-        res.status(200).json(materials);
+            const { page = 1, size = 5 } = req.query; // Lấy số trang và kích thước, mặc định size=10
+            const limit = parseInt(size); // Số lượng đơn sản xuất trên mỗi trang
+            const skip = (page - 1) * limit; // Bỏ qua các đơn đã lấy từ các trang trước
+            const materials = await Material.find()
+                .skip(skip)
+                .limit(limit);
+
+            const totalMaterials = await Material.countDocuments(); // Tổng số đơn sản xuất
+            const totalPages = Math.ceil(totalMaterials / limit); // Tính số trang
+              
+            res.status(200).json({
+                materials,
+                totalPages,
+                currentPage: parseInt(page),
+            });
         } catch (error) {
-        res.status(500).json({ message: error.message });
+            res.status(500).json({ message: error.message });
         }
     },
 
