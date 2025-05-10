@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form, InputGroup, FormControl } from 'react-bootstrap';
+import { Button, Table, Modal, Form, InputGroup, Pagination, FormControl } from 'react-bootstrap';
 import { api } from '../../api';
 
 const ConsumptionStandard = () => {
+    // Phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+
     const [consumptionStandards, setConsumptionStandards] = useState([]);
     const [products, setProducts] = useState([]);
     const [materials, setMaterials] = useState([]);
@@ -27,12 +32,16 @@ const ConsumptionStandard = () => {
         fetchConsumptionStandards();
         fetchProducts();
         fetchMaterials();
-    }, []);
+    }, [currentPage, pageSize]);
 
     const fetchConsumptionStandards = async () => {
         try {
-            const response = await api.get('/consumption-standards');
-            setConsumptionStandards(response.data);
+            const response = await api.get('/consumption-standards', {
+            params: { page: currentPage, size: pageSize }
+            });
+            setConsumptionStandards(response.data.consumptionStandards);
+            setTotalPages(response.data.totalPages);
+            setCurrentPage(response.data.currentPage);
         } catch (error) {
             console.error('Error fetching consumption standards:', error);
         }
@@ -41,24 +50,30 @@ const ConsumptionStandard = () => {
     const fetchProducts = async () => {
         try {
             const response = await api.get('/products');
-            if (Array.isArray(response.data)) {
-                setProducts(response.data);
+            if (Array.isArray(response.data.products)) {
+                setProducts(response.data.products);
             } else {
                 console.warn('Products data is not an array:', response.data);
                 setProducts([]);
             }
         } catch (error) {
             console.error('Error fetching products:', error);
-            setProducts([]); 
+            setProducts([]);
         }
     };
 
     const fetchMaterials = async () => {
         try {
             const response = await api.get('/materials');
-            setMaterials(response.data);
+            if (Array.isArray(response.data.materials)) {
+                setMaterials(response.data.materials);
+            } else {
+                console.warn('Materials data is not an array:', response.data);
+                setMaterials([]);
+            }
         } catch (error) {
             console.error('Error fetching materials:', error);
+            setMaterials([]);
         }
     };
 
@@ -203,6 +218,10 @@ const ConsumptionStandard = () => {
         }
     };
 
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
     return (
         <div className="container mt-4">
             <h2>Consumption Standard</h2>
@@ -253,6 +272,26 @@ const ConsumptionStandard = () => {
                         ))}
                 </tbody>
             </Table>
+
+            <Pagination>
+                <Pagination.Prev
+                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                />
+                {[...Array(totalPages)].map((_, index) => (
+                    <Pagination.Item
+                    key={index + 1}
+                    active={index + 1 === currentPage}
+                    onClick={() => handlePageChange(index + 1)}
+                    >
+                    {index + 1}
+                    </Pagination.Item>
+                ))}
+                <Pagination.Next
+                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                />
+            </Pagination>
 
             <Modal show={showModal} onHide={handleClose}>
                 <Modal.Header closeButton>

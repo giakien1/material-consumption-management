@@ -27,21 +27,23 @@ const MaterialPage = () => {
     }, [currentPage, pageSize]);
 
     const fetchMaterials = async (searchKeyword = '') => {
-        try {
-          if (searchKeyword) {
-            const response = await api.get(`/materials/search/${searchKeyword}`);
-            setMaterials([...response.data]);
-          } else {
-            const response = await api.get(`/materials?page=${currentPage}&pageSize=${pageSize}`);
-            setMaterials([...response.data.materials]);
+      try {
+        const response = searchKeyword
+            ? await api.get(`/materials/search/${searchKeyword}`)
+            : await api.get(`/materials?page=${currentPage}&pageSize=${pageSize}`);
+
+        const materialsData = searchKeyword ? response.data.materials : response.data.materials;
+        setMaterials([...materialsData]);
+
+        if (!searchKeyword) {
             setTotalPages(response.data.totalPages);
-            setMessage({ type: 'danger', text: 'Failed to load employees.' });
-          }
-        } catch (error) {
-            console.error('Error fetching materials:', error.message);
-            alert('Failed to fetch materials');
         }
-    };
+      } catch (error) {
+        console.error('Error fetching materials:', error.message);
+        alert('Failed to fetch materials');
+          }
+      };
+
 
     const handleShowAdd = () => {
         setFormData({ MaterialID: '', MaterialName: '', Unit: '', UnitPrice: 0 });

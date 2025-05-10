@@ -16,8 +16,8 @@ const warehouseMaterialController = {
         .skip(skip)
         .limit(limit);
       
-      const totalOrders = await ProductionOrder.countDocuments(); // Tổng số đơn sản xuất
-      const totalPages = Math.ceil(totalOrders / limit); // Tính số trang  
+      const totalMaterials = await WarehouseMaterial.countDocuments(); 
+      const totalPages = Math.ceil(totalMaterials / limit); // Tính số trang  
         
       res.status(200).json({
         warehouseMaterials,

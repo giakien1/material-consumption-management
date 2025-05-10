@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form } from 'react-bootstrap';
+import { Button, Table, Modal, Form, Pagination } from 'react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { api } from '../api';
 
 const WarehouseMaterialPage = () => {
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const [totalPages, setTotalPages] = useState(0);  // Tổng số trang
+  const [pageSize, setPageSize] = useState(5); 
+
   const [warehouseMaterials, setWarehouseMaterials] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -29,12 +33,22 @@ const WarehouseMaterialPage = () => {
     } else {
       fetchWarehouseMaterials();
     }
-  }, [selectedWarehouse]);
+  }, [selectedWarehouse,currentPage, pageSize]);
 
   const fetchWarehouseMaterials = async () => {
     try {
-      const response = await api.get('/warehouse-materials');
-      setWarehouseMaterials([...response.data]);
+      const response = await api.get('/warehouse-materials',{
+        params: {
+          page: currentPage,
+          size: pageSize,
+        },
+      });
+      if (Array.isArray(response.data.warehouseMaterials)) {
+      setWarehouseMaterials(response.data.warehouseMaterials);
+      setTotalPages(response.data.totalPages || 1); 
+    } else {
+        toast.error('Failed to fetch materials in warehouse: ' + (error.response?.data?.message || error.message));
+      }
     } catch (error) {
       toast.error('Failed to fetch warehouse materials: ' + (error.response?.data?.message || error.message));
     }
@@ -52,8 +66,12 @@ const WarehouseMaterialPage = () => {
   const fetchMaterials = async () => {
     try {
       const response = await api.get('/materials');
-      console.log('Fetched materials:', response.data);
-      setMaterials([...response.data]);
+      if (Array.isArray(response.data.materials)) {
+      setMaterials(response.data.materials);
+      } else {
+        console.error('Expected materials array but got:', response.data);
+        toast.error('Material data is invalid');
+      }
     } catch (error) {
       toast.error('Failed to fetch materials: ' + (error.response?.data?.message || error.message));
     }
@@ -62,23 +80,27 @@ const WarehouseMaterialPage = () => {
   const fetchWarehouses = async () => {
     try {
       const response = await api.get('/warehouses');
-      console.log('Fetched warehouses:', response.data);
-      setWarehouses([...response.data]);
+      if (Array.isArray(response.data.warehouses)) {
+      setWarehouses(response.data.warehouses);
+      } else {
+        console.error('Expected materials array but got:', response.data);
+        toast.error('Warehouse data is invalid');
+      }
     } catch (error) {
       toast.error('Failed to fetch warehouses: ' + (error.response?.data?.message || error.message));
     }
   };
 
-  const handleShowAdd = () => {
-    setFormData({
-      MaterialID: materials.length > 0 ? materials[0].MaterialID : '',
-      WarehouseID: selectedWarehouse || (warehouses.length > 0 ? warehouses[0].WarehouseID : ''),
-      StockQuantity: '',
-    });
-    setIsEdit(false);
-    setErrors({});
-    setShowModal(true);
-  };
+  // const handleShowAdd = () => {
+  //   setFormData({
+  //     MaterialID: materials.length > 0 ? materials[0].MaterialID : '',
+  //     WarehouseID: selectedWarehouse || (warehouses.length > 0 ? warehouses[0].WarehouseID : ''),
+  //     StockQuantity: '',
+  //   });
+  //   setIsEdit(false);
+  //   setErrors({});
+  //   setShowModal(true);
+  // };
 
   // const handleShowEdit = (warehouseMaterial) => {
   //   setFormData({
@@ -181,6 +203,17 @@ const WarehouseMaterialPage = () => {
   //   }
   // };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // Sau khi thay đổi trang, gọi lại dữ liệu cho trang mới
+    if (selectedWarehouse) {
+      fetchMaterialsByWarehouse(selectedWarehouse);
+    } else {
+      fetchWarehouseMaterials();
+    }
+  };
+
+
   return (
     <div className="container mt-4">
       <h2>Material Search</h2>
@@ -255,6 +288,28 @@ const WarehouseMaterialPage = () => {
           )}
         </tbody>
       </Table>
+
+      {/* Pagination Controls */}
+      <Pagination>
+        <Pagination.Prev
+          disabled={currentPage === 1}
+          onClick={() => handlePageChange(currentPage - 1)}
+        />
+        {[...Array(totalPages)].map((_, index) => (
+          <Pagination.Item
+            key={index + 1}
+            active={index + 1 === currentPage}
+            onClick={() => handlePageChange(index + 1)}
+          >
+            {index + 1}
+          </Pagination.Item>
+        ))}
+        <Pagination.Next
+          disabled={currentPage === totalPages}
+          onClick={() => handlePageChange(currentPage + 1)}
+        />
+      </Pagination>
+
 
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>
