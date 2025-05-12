@@ -37,13 +37,24 @@ const ProductionOrderPage = () => {
   }, [currentPage]);
 
   const fetchWarehouses = async () => {
-      try {
-        const res = await api.get('/warehouses');
-        setWarehouses(res.data);
-      } catch (err) {
-        console.error('Lỗi khi lấy danh sách kho:', err.message);
+    try {
+      const res = await api.get('/warehouses');
+      console.log('Warehouses API Response:', res.data); // Log the response to inspect the structure
+
+      if (Array.isArray(res.data.warehouses)) {
+        setWarehouses(res.data.warehouses);
+      } else {
+        console.warn('Warehouses data is not an array:', res.data);
+        setWarehouses([]); // Set to empty array if the data is not in the expected format
+        setMessage({ type: 'danger', text: 'Failed to load warehouses.' });
       }
+    } catch (err) {
+      console.error('Error when fetching the warehouse:', err.message);
+      setWarehouses([]); // Set to empty array in case of an error
+      setMessage({ type: 'danger', text: 'Failed to load warehouses.' });
+    }
   };
+
 
   const fetchOrders = async () => {
     try {
@@ -227,7 +238,7 @@ const ProductionOrderPage = () => {
                 required
               >
                 <option value="">-- Choose Warehouse --</option>
-                {warehouses.map((w) => (
+                {Array.isArray(warehouses) && warehouses.map((w) => (
                   <option key={w._id} value={w._id}>{w.WarehouseName}</option>
                 ))}
               </Form.Select>

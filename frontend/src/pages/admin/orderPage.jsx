@@ -117,7 +117,7 @@ const ProductionOrderPage = () => {
           Status: status,
           WarehouseID: warehouseID,
         });
-        setMessage({ type: 'success', text: 'Cập nhật đơn sản xuất thành công!' });
+        setMessage({ type: 'success', text: 'Order updated succesfully' });
       } else {
         await api.post('/orders', {
           ProductID: productID,
@@ -125,7 +125,7 @@ const ProductionOrderPage = () => {
           ProductionQuantity: parseInt(productionQuantity),
           Status: 'Pending',
         });
-        setMessage({ type: 'success', text: 'Tạo đơn sản xuất thành công!' });
+        setMessage({ type: 'success', text: 'Order created succesfully!' });
       }
 
       setOrderID('');
@@ -139,7 +139,7 @@ const ProductionOrderPage = () => {
     } catch (error) {
       setMessage({
         type: 'danger',
-        text: error.response?.data?.message || 'Đã xảy ra lỗi khi lưu đơn sản xuất.',
+        text: error.response?.data?.message || 'Something wrong when creating the order.',
       });
     } finally {
       setLoading(false);
@@ -157,16 +157,16 @@ const ProductionOrderPage = () => {
   };
 
   const handleDeleteOrder = async (orderID) => {
-    if (!window.confirm('Bạn có chắc muốn xóa đơn này?')) return;
+    if (!window.confirm('Are you sure you want to delete this?')) return;
 
     try {
       await api.delete(`/orders/${orderID}`);
-      setMessage({ type: 'success', text: 'Xóa đơn thành công!' });
+      setMessage({ type: 'success', text: 'Deleted successfully!' });
       fetchOrders();
     } catch (error) {
       setMessage({
         type: 'danger',
-        text: error.response?.data?.message || 'Đã xảy ra lỗi khi xóa đơn.',
+        text: error.response?.data?.message || 'Something went wrong when deleting the order.',
       });
     }
   };
@@ -349,7 +349,7 @@ const ProductionOrderPage = () => {
                   required
                 >
                   <option value="Pending">Pending</option>
-                  <option value="In Progress">In Progress</option>
+                  <option value="InProgress">In Progress</option>
                   <option value="Completed">Completed</option>
                   <option value="Cancelled">Cancelled</option>
                 </Form.Select>

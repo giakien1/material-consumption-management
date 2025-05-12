@@ -72,68 +72,111 @@ const productionOrderController = {
 
   // Cập nhật đơn sản xuất
   async updateOrder(req, res) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-  
     try {
       const { ProductionQuantity, CompletionDate, Status } = req.body;
-  
-      const order = await ProductionOrder.findOne({ OrderID: req.params.id }).session(session);
+
+      const order = await ProductionOrder.findOne({ OrderID: req.params.id });
       if (!order) {
-        await session.abortTransaction();
-        return res.status(404).json({ message: 'Production order not found' });
+        return res.status(404).json({ message: 'Order not found' });
       }
-  
+
       const prevStatus = order.Status;
-  
+
       // Cập nhật đơn
       order.ProductionQuantity = ProductionQuantity;
       order.CompletionDate = CompletionDate;
       order.Status = Status;
-      await order.save({ session });
-  
-      // Nếu chuyển sang "In Progress"
-      if (prevStatus !== 'In Progress' && Status === 'In Progress') {
-        const standards = await ConsumptionStandard.find({ ProductID: order.ProductID }).session(session);
-  
+      await order.save();
+
+      const reversedStock = [];
+
+      if (prevStatus !== 'InProgress' && Status === 'InProgress') {
+
+        const standards = await ConsumptionStandard.find({ ProductID: order.ProductID });
+        console.log("Found standards:", standards.length);
+
+        if (standards.length === 0) {
+          console.warn("ConsumptionStandard not found:", order.ProductID);
+        }
+
         for (const standard of standards) {
-          const consumedQty = standard.StandardQuantity * ProductionQuantity;
-  
-          // Tìm bản ghi tồn kho của vật tư trong kho (mặc định lấy 1 kho nào đó, hoặc bạn có thể gán WarehouseID cụ thể)
+        // Kiểm tra độ dài mảng MaterialIDs và StandardQuantities phải bằng nhau
+        if (standard.MaterialIDs.length !== standard.StandardQuantities.length) {
+          continue;
+        }
+
+        for (let i = 0; i < standard.MaterialIDs.length; i++) {
+          const materialID = standard.MaterialIDs[i];
+          const standardQty = standard.StandardQuantities[i];
+          const consumedQty = standardQty * ProductionQuantity;
+
           const wm = await WarehouseMaterial.findOne({
-            MaterialID: standard.MaterialID,
+            MaterialID: materialID,
             WarehouseID: order.WarehouseID,
-          }).session(session);
-  
+          });
+
           if (!wm || wm.StockQuantity < consumedQty) {
-            await session.abortTransaction();
-            return res.status(400).json({ message: `Not enough material in the warehouse: ${standard.MaterialID}` });
+
+            // Rollback
+            for (const stock of reversedStock) {
+              await WarehouseMaterial.updateOne(
+                { MaterialID: stock.MaterialID, WarehouseID: stock.WarehouseID },
+                { $inc: { StockQuantity: stock.qty } }
+              );
+            }
+
+            return res.status(400).json({ message: `Not enough material in the warehouse: ${materialID}` });
           }
-  
-          // Trừ tồn kho
+
+          // Trừ kho
           wm.StockQuantity -= consumedQty;
-          await wm.save({ session });
-  
-          // Tạo bản ghi tiêu hao
-          await MaterialConsumption.create([{
-            ConsumptionID: `C${Date.now()}${Math.floor(Math.random() * 1000)}`,
-            OrderID: order.OrderID,
-            MaterialID: standard.MaterialID,
+          await wm.save();
+
+          reversedStock.push({ MaterialID: materialID, WarehouseID: order.WarehouseID, qty: consumedQty });
+
+          // Tìm bản ghi cuối cùng và tạo StandardID mới
+          const lastStandard = await ConsumptionStandard.findOne().sort({ StandardID: -1 });
+
+          let newID = 'STD001';  
+
+          if (lastStandard) {
+            const lastStandardID = lastStandard.StandardID;
+            const lastNumber = parseInt(lastStandardID.replace('STD', '')) || 0;
+
+            // Increment the number to generate a new ID
+            let newNumber = lastNumber + 1;
+            newID = 'STD' + newNumber.toString().padStart(3, '0');
+
+            // Ensure unique ConsumptionID
+            let existingConsumption = await MaterialConsumption.findOne({ ConsumptionID: newID });
+            while (existingConsumption) {
+              newNumber++; // Increment the number if the ID already exists
+              newID = 'STD' + newNumber.toString().padStart(3, '0');
+              existingConsumption = await MaterialConsumption.findOne({ ConsumptionID: newID });
+            }
+          }
+
+          // Ghi lại tiêu hao
+          await MaterialConsumption.create({
+            ConsumptionID: newID,
+            OrderID: order._id,
+            MaterialID: materialID,
             ConsumedQuantity: consumedQty,
             ConsumptionDate: new Date(),
-          }], { session });
+          });
         }
       }
-  
-      await session.commitTransaction();
+      } else {
+        console.log("Không cần trừ vật tư vì trạng thái không chuyển sang In Progress mới.");
+      }
+
       res.status(200).json(order);
     } catch (error) {
-      await session.abortTransaction();
+      console.error("Error when updating order:", error);
       res.status(400).json({ message: error.message });
-    } finally {
-      session.endSession();
     }
   },
+
 
   // Xóa đơn sản xuất
   async deleteOrder(req, res) {

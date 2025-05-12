@@ -46,20 +46,17 @@ const consumptionStandardController = {
     async createConsumptionStandard(req, res) {
         try{
             const { ProductID, MaterialIDs, StandardQuantities } = req.body;
-            console.log(req.body);  // Kiểm tra dữ liệu nhận từ frontend
 
             // Kiểm tra xem MaterialIDs có phải là mảng không, nếu không thì ép kiểu thành mảng
             const materialIDsArray = Array.isArray(MaterialIDs) ? MaterialIDs : [MaterialIDs];
 
-            console.log(ProductID);
-            const product = await Product.findOne({ ProductID: ProductID });
+            const product = await Product.findOne({ _id: ProductID });
             if (!product) {
                 return res.status(400).json({ message: 'Product not found' });
             }
  
             // Kiểm tra xem tất cả các nguyên liệu có tồn tại không
             const materials = await Material.find({ _id: { $in: materialIDsArray  } });
-            console.log(materials); // Xem dữ liệu nguyên liệu trả về từ DB
             
             if (materials.length !== materialIDsArray.length) {
                 return res.status(400).json({ message: 'Some materials not found' });

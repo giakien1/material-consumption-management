@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form, Pagination } from 'react-bootstrap';
+import { Button, Table, Modal, Form, Pagination, Alert } from 'react-bootstrap';
 import { api } from '../../api';
 
 const ProductPage = () => {
   const [products, setProducts] = useState([]);
+  const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     ProductID: '',
@@ -64,7 +65,14 @@ const ProductPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.ProductID.trim() || !formData.ProductName.trim()) {
+      setError('Please fill in the product ID and name');
+      return; 
+    }
+
     try {
+      setError(''); 
       if (isEdit) {
         await api.put(`/products/${formData.ProductID}`, formData); // Dùng api.put
       } else {
@@ -209,6 +217,10 @@ const ProductPage = () => {
                 placeholder="Enter Description"
               />
             </Form.Group>
+
+            {/* Hiển thị thông báo lỗi nếu có */}
+            {error && <Alert variant="danger">{error}</Alert>}
+
             <Button variant="primary" type="submit">
               {isEdit ? 'Update' : 'Add'}
             </Button>

@@ -11,12 +11,12 @@ const consumptionStandardSchema = new mongoose.Schema({
     ref: 'Product',
     required: true,
   },
-  MaterialIDs: [{  // Chuyển từ MaterialID sang một mảng để lưu nhiều nguyên liệu
+  MaterialIDs: [{ 
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Material',
     required: true,
   }],
-  StandardQuantities: [{  // Mảng này chứa định mức của mỗi nguyên liệu
+  StandardQuantities: [{  
     type: Number,
     required: true,
     min: 0, // Định mức không âm

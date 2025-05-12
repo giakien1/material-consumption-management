@@ -93,9 +93,11 @@ const ConsumptionStandard = () => {
         setFormData({
             StandardID: standard.StandardID,
             ProductID: standard.ProductID?.ProductID || '',
-            MaterialID: standard.MaterialID?.MaterialID || '',
-            StandardQuantity: standard.StandardQuantity,
+            MaterialIDs: standard.MaterialIDs?.map(m => m._id) || [], 
+            StandardQuantities: standard.StandardQuantities || [],
         });
+        setAddedMaterials(standard.MaterialIDs?.map(m => m._id) || []); 
+        setAddedQuantities(standard.StandardQuantities || []);
         setIsEdit(true);
         setErrors({});
         setShowModal(true);
@@ -123,7 +125,7 @@ const ConsumptionStandard = () => {
             setFormData({ ...formData, [name]: selectedMaterials });
     
             // Tạo mảng các StandardQuantities tương ứng với số lượng vật liệu được chọn
-            const updatedQuantities = selectedMaterials.map(() => 0);  // Mỗi vật liệu có số lượng mặc định là 0
+            const updatedQuantities = selectedMaterials.map(() => 0);  
             setFormData({ ...formData, StandardQuantities: updatedQuantities });
         } else if (name === "StandardQuantities") {
             const quantities = value.split(',').map(q => parseFloat(q.trim()));
@@ -324,10 +326,10 @@ const ConsumptionStandard = () => {
                             >
                                 <option value="">-- Select Material --</option>
                                 {materials
-                                    .filter(m => !formData.MaterialIDs.includes(m.MaterialID)) // không cho chọn lại material đã chọn
+                                    .filter(m => Array.isArray(formData.MaterialIDs) && !formData.MaterialIDs.includes(m.MaterialID))
                                     .map(m => (
                                         <option key={m._id} value={m._id}>
-                                            {m.MaterialName} ({m.MaterialID})
+                                        {m.MaterialName} ({m.MaterialID})
                                         </option>
                                     ))}
                             </Form.Select>
